@@ -1,0 +1,83 @@
+elvira.tmp.dir @elvira.tmp.dir.path@
+
+default.fundingSource @default.fundingSource@
+
+ace.root.dir @ace.root.dir@
+barcode.root.dir @barcode.root.dir@
+default.consed.dir @default.consed.dir@
+
+autoTasker  @root.dir@/bin/autoTasker2
+vigor_exe	@vigor.path@
+
+createScaffoldCoverageMap.exe.path @root.dir@/bin/createScaffoldCoverageMaps
+createClosureAnnotationSpreadsheet.exe.path @root.dir@/bin/createClosureAnnotationTransferSpreadsheet
+iterativeCreateBetterReference.exe.path @root.dir@/bin/iterativeCreateBetterReference
+
+fastq.deconvolve.worker.exe.path @root.dir@/bin/workers/deconvolveSingleFastq
+
+detect_abacus_worker	@root.dir@/bin/workers/detectAbacusErrorsInAce
+re_abacus_worker		@root.dir@/bin/workers/reAbacusAceContig
+muscle					@muscle.path@
+blast					@blast.path@
+mafft					@mafft.path@
+
+rtv.type.blastDb		@rtv.type.blastDb.path@
+rtv.type.refOrfFastaPath		@rtv.type.refOrfFastaPath@
+
+rtv.type.blastDb.prefix			RotaC_ReferenceDB_v15.1_14_NOV_2013.fixed
+
+flu.master.LR_amplicon.path	@flu.master.LR_amplicon.path@
+
+fluB.lineage.blastDb	@fluB.lineage.blastDb@
+fluB.lineage.map	@fluB.lineage.map@
+
+flu.pdmVsSeas.blastDb	@flu.pdmVsSeas.blastDb@
+
+reversegeocode.placenames.path @reversegeocode.placenames.path@
+reversegeocode.countryCodeMap.path @reversegeocode.countryCodeMap.path@
+
+viralCas2ConsedPipelineExe	@root.dir@/bin/viralCas2ConsedPipeline
+
+multiThreadedAceIndelDetector	@root.dir@/bin/multiThreadedDetectIndelsInAce
+
+nextGenTrimmerTempDir	@nextGenTrimmerTempDir.path@
+mail.smtp.host	@mail.smtp.host@
+
+
+#need to set user name and password (real values not committed to svn)
+projectdb.default.user @projectdb.default.user@
+projectdb.default.pass @projectdb.default.pass@
+
+lims.default.user @lims.default.user@
+lims.default.pass @lims.default.pass@ 
+
+
+glk.serviceAccount.user	@glk.serviceAccount.user@
+glk.serviceAccount.pass	@glk.serviceAccount.pass@
+#account for getting data delivery sequencing reports
+glk.sequenceReport.user @glk.sequenceReport.user@
+glk.sequenceReport.pass @glk.sequenceReport.pass@
+#account for full read/write/update to GLK tables
+glk.admin.user @glk.admin.user@
+glk.admin.pass @glk.admin.pass@
+
+#account for modifying JIRA sample tracking
+
+jira.sampletracking.prod.url	@jira.sampletracking.prod.url@
+jira.sampletracking.prod.user	@jira.sampletracking.prod.user@
+jira.sampletracking.prod.pass	@jira.sampletracking.prod.pass@
+
+jira.sampletracking.dev.url		@jira.sampletracking.dev.url@
+jira.sampletracking.dev.user	@jira.sampletracking.dev.user@
+jira.sampletracking.dev.pass	@jira.sampletracking.dev.pass@
+
+
+ometa.serviceAccount.user @ometa.serviceAccount.user@
+ometa.serviceAccount.pass @ometa.serviceAccount.pass@
+
+sispa.barcode.path @sispa.barcode.path@
+
+vhtngs.trace.fileserver.path @vhtngs.trace.fileserver.path@
+
+preferred.queue @fastQueue@
+gridReAbacusAce.queue @hiMemQueue@

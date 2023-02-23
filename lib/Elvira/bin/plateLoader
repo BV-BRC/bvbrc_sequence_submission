@@ -1,0 +1,451 @@
+#!/usr/bin/env perl
+
+use strict;
+
+use File::Basename;
+my $SCRIPT = basename($0);
+
+# #########################################################################
+#
+#    Usage Declaration
+#
+# #########################################################################
+my $USAGE = qq~
+USAGE: $SCRIPT -D <database> <plate template spreadsheet>
+               [-S <server>]
+               [-U <user> [-P <password>]] 
+~;
+
+# #########################################################################
+#
+#   Helptext Declaration
+#
+# #########################################################################
+my $HELPTEXT = qq~
+
+$SCRIPT - Load a primer plate from a compatible plate template spreadsheet
+$USAGE
+
+HELP:
+
+  --help (-h)      : Displays this help text.
+  --version (-v)   : Displays the current version information.
+  --usage (-u)     : Displays usage information.
+
+OPTIONS:
+
+  --name <string>  : The name of the plate (Optional for formats that supply
+                     plate names internally)
+  --desc <string>  : The plate description (Optional)
+  --host <string>  : The host organism
+  --type <string>  : The sub-species organism type
+
+DATABASE:
+
+  -S <string>      : Sets the database server to use.
+  -D <database>    : Sets the database name to use. 
+  -U <username>    : Declares the username for database access.
+  -P <password>    : Declares the password for database access.
+
+BEHAVIOR:
+  --[no]load       : [Do not] Load the plate into the database.
+                       (Default is to load the plate)
+  --force-coords   : Ignore coordinate mismatches when identical primer
+                     sequence is found.
+  --force-regions  : Ignore region mismatches when identical primer
+                     sequence is found.
+  --ignoreExistingPrimers : Do not reuse primer pairs, this is to
+  					allow the same primer pairs to be used with different coordinates
+  					(Not recommended)
+
+OUTPUT:
+
+  --quiet (-q)     : Suppress all console messages.
+  --output <file>  : Direct all console messages to this file.
+
+~;
+
+# #########################################################################
+#
+#    Version Strings
+#
+# #########################################################################
+my $VERSION = "0.9.1";
+my $BUILD = (qw/$Revision: 1354 $/ )[1];
+
+# #########################################################################
+#
+#    Load Modules
+#
+# #########################################################################
+
+#
+#  Use Local Modules First
+#
+use FindBin qw($Bin);
+use lib "$Bin/../perllib";
+use lib "$Bin";
+
+#
+#  Standard USE statments
+#
+use Getopt::Long;
+use Term::ReadKey; #For passwords
+use IO::Handle;
+
+#
+#  Load JavaRunner
+#
+use Java::Runner;
+
+# #########################################################################
+#
+#    Subroutine Declarations
+#
+# #########################################################################
+
+sub getPassword(;$);
+
+# #########################################################################
+#
+#    Global Variables
+#
+# #########################################################################
+
+my %overrides = ();
+
+#
+#  Option Variables
+# 
+my $plate_file = undef;
+
+my $plate_name = undef;
+my $plate_desc = "";
+my $plate_host = undef;
+my $plate_type = undef;
+
+# Behavior Options
+my $do_load = 1;
+my $study_path = undef;
+
+# Standard Database Options
+my $db_passfile_path = undef;
+my $db_server = undef;
+my $db_name   = undef;
+my $db_user   = undef;
+my $db_pass   = undef;
+
+# Database Defaults
+my $DEFAULT_DB_SERVER = "SYBTIGR";
+my $DEFAULT_DB_NAME = undef;
+my $DEFAULT_DB_USER = "access";
+my $DEFAULT_DB_PASS = "access";
+
+# Meta-Options
+my $show_help = undef;
+my $show_version = undef;
+my $show_usage = undef;
+my $force_coordinates = undef;
+my $force_regions = undef;
+my $ignoreExistingPrimers = undef;
+
+# Devel Options
+my $cmd_check = undef;
+my $do_devel = undef;
+
+#
+#  Ouput Variables
+#
+my $output_filename;
+my $quiet_mode = undef;
+my $output = undef;
+
+# #########################################################################
+#
+#    Command Line Option Parsing
+#
+# #########################################################################
+$Getopt::Long::ignorecase = 0;
+$Getopt::Long::autoabbrev = 0;
+my $parsed = GetOptions(
+                         # Standard Database Options
+                         'S=s' => \$db_server,
+                         'D=s' => \$db_name,
+                         'U=s' => \$db_user,
+                         'P=s' => \$db_pass,
+                         'p=s' => \$db_passfile_path,
+                     
+                         'q|quiet' => \$quiet_mode,
+                         'o|output=s' => \$output_filename,
+                         
+                         'load!' => \$do_load,
+                         'study=s' => \$study_path,
+                         
+                         'name=s' => \$plate_name,
+                         'desc=s' => \$plate_desc,
+                         'host=s' => \$plate_host,
+                         'type=s' => \$plate_type,
+                         
+                         'force-coords' => \$force_coordinates,
+                         'force-region' => \$force_regions,
+                         
+                         'h|help' => \$show_help,
+                         'V|version' => \$show_version,
+                         'u|usage' => \$show_usage,
+                         'ignoreExistingPrimers!' => \$ignoreExistingPrimers,
+                         # Devel Options
+                         'cmd-check' => \$cmd_check,
+                         'devel' => \$do_devel,
+                        );
+
+# #########################################################################
+#
+#    Handle command line failures
+#
+# #########################################################################
+
+unless ($parsed)
+{
+    print STDERR "Invalid command-line.\n";
+    print STDERR $USAGE;
+    
+    exit(1);
+}
+
+# #########################################################################
+#
+#    Display Usage/Helptext/Version
+#
+# #########################################################################
+
+if ($show_help)
+{
+    print STDOUT $HELPTEXT;
+    exit(0);   
+}
+if ($show_version)
+{
+    printf STDOUT "%s v%s [Build %s]\n", $SCRIPT, $VERSION, $BUILD;
+    exit(0);
+}
+if ($show_usage)
+{
+    print STDOUT $USAGE;
+    exit(0);
+}
+
+# #########################################################################
+#
+#    Load the password file as defaults 
+#
+# #########################################################################
+
+if (defined $db_passfile_path)
+{
+    my @passdata = ();
+    my $passfile = new IO::File();
+    if ($passfile->open($db_passfile_path, 'r'))
+    {
+        for (my $i = 0; $i < 4; $i++)
+        {
+            my ($line) = $passfile->getline() =~ /^\s*(.*)\s*$/;
+            $line = undef if ($line =~ /^\s*$/);
+            push @passdata, $line;
+        }
+        
+        $passfile->close();
+    }
+}
+
+# #########################################################################
+#
+#    Resolve the database credentials
+#
+# #########################################################################
+
+if (defined $db_user) { $db_pass = getPassword() unless ($db_pass); }
+else { ($db_user, $db_pass) = ($DEFAULT_DB_USER, $DEFAULT_DB_PASS); }
+
+$db_server = $DEFAULT_DB_SERVER unless defined $db_server;
+$db_name = $DEFAULT_DB_NAME unless defined $db_name;
+
+die("You must specify a database server with -S <server> or a passfile.\n") unless defined $db_server;
+die("You must supply a project database with -D <project> or a passfile.\n") unless defined $db_name;
+die("You must supply a username with -D <project> or a passfile.\n") unless defined $db_user;
+die("No password specified.\n") unless defined $db_pass;
+
+# #########################################################################
+#
+#    Get a handle to the output
+#
+# #########################################################################
+
+# Interpret the following as aliases for console output
+if (defined $output_filename and (($output_filename eq "-") or 
+                                  ($output_filename eq "STDOUT")))
+{
+    $output_filename = undef;
+}
+
+#
+#  Route output to /dev/null if we requested quiet mode
+#
+if ($quiet_mode)
+{
+    $output_filename = "/dev/null";
+}
+
+if (defined $output_filename)
+{
+    $output = new IO::File;
+    $output->open($output_filename, "w");
+}
+else
+{
+    $output = new IO::Handle;
+    $output->fdopen(1, "w");  
+}
+
+# #########################################################################
+#
+#    Handle command line options
+#
+# #########################################################################
+
+$overrides{'plateLoader.user'} = $db_user if (defined $db_user);
+$overrides{'plateLoader.pass'} = $db_pass if (defined $db_pass);
+$overrides{'plateLoader.server'} = $db_server if (defined $db_server);
+$overrides{'plateLoader.db'} = $db_name if (defined $db_name);
+
+$overrides{'plateLoader.writeStudy'} = $study_path if (defined $study_path);
+
+$overrides{'plateLoader.plateName'} = $plate_name if (defined $plate_name);
+$overrides{'plateLoader.plateDesc'} = $plate_desc if (defined $plate_desc);
+$overrides{'plateLoader.host'} = $plate_host if (defined $plate_host);
+$overrides{'plateLoader.subtype'} = $plate_type if (defined $plate_type);
+
+$overrides{'plateLoader.ignoreCoordinateMismatch'} = 1 if ($force_coordinates);
+$overrides{'plateLoader.ignoreRegionMismatch'} = 1 if ($force_regions);
+if(defined $ignoreExistingPrimers){
+	$overrides{'plateLoader.ignoreExistingPrimers'}= "true";
+}else{
+	$overrides{'plateLoader.ignoreExistingPrimers'}= "false";
+}
+if ($do_load)
+{
+    $output->print("Reading plate and loading into the supplied database.\n");
+    $overrides{'plateLoader.load'} = "true";
+}
+else
+{
+    $output->print("Reading only.  The plate will not be loaded.\n");
+}
+
+# #########################################################################
+#
+#    Set up the JavaRunner
+#
+# #########################################################################
+
+my $runner = Java::Runner->new();
+
+$runner->useJavaPreset("8");
+
+$runner->clearClassPath();
+
+$runner->initialHeapSize(80);
+
+if ($do_devel)
+{
+    $runner->addClassLocation("$Bin/../bin");
+}
+$runner->addJarDirectory("$Bin/../lib/platetools");
+$runner->addClassLocation("$Bin/../resources");
+$runner->addJarDirectory("$Bin/../lib/log4j");
+$runner->addJarDirectory("$Bin/../lib/glklib");
+$runner->addJarDirectory("$Bin/../lib/jlims");
+$runner->addJarDirectory("$Bin/../lib/hibernate");
+$runner->addJarDirectory("$Bin/../lib/jillion");
+$runner->addJarDirectory("$Bin/../lib/elvirautilities");
+$runner->addJarDirectory("$Bin/../lib/euid");
+$runner->addJarDirectory("$Bin/../lib/jdbc");
+$runner->addJarDirectory("$Bin/../lib/jodatime");
+$runner->addJarDirectory("$Bin/../lib/apache-poi");
+$runner->addJarDirectory("$Bin/../lib/swing-extra");
+
+
+$runner->mainClass("org.jcvi.platetools.PlateLoader");
+
+#
+#  Apply user overrides
+#
+for my $property (sort keys %overrides)
+{
+    my $value = $overrides{$property};
+    
+    $runner->setProperty($property, $value);
+}
+
+#
+#  Add file targets
+#
+while(my $file = shift)
+{
+    $runner->addParameters($file);
+}
+
+# #########################################################################
+#
+#    Kick off the JavaRunner
+#
+# #########################################################################
+
+if ($cmd_check) { printf("CMD> %s\n", $runner->getCommandLine()); }
+else
+{
+    $runner->execute();
+}
+
+# #########################################################################
+#
+#    End the Script
+#
+# #########################################################################
+END
+{
+    $output->close() if defined $output;
+}
+
+# #########################################################################
+#
+#    Subroutine Implementations
+#
+# #########################################################################
+
+sub getPassword(;$)
+{
+    # Read the prompt, or use the default
+    my $prompt = (shift or "Password: ");
+    print $prompt;
+
+    # Don't echo the keystrokes to the user
+    ReadMode 'noecho';
+
+    # Read the password
+    my $pass = ReadLine 0;
+
+    # Check to see if the password is defined
+    return undef unless (defined $pass);
+
+    # If there is a password, strip off any trailing CR, LF, or CRLFs.
+    #  Note: In theory, a password can end in a space, so we don't want to
+    #        use 'chomp()'
+    $pass =~ s/[\r\n]+$//;
+
+    # Advance the line on the tty, and put it back to normal mode.
+    print("\n") or return undef;
+    ReadMode 'normal';
+
+    # Return the password
+    return $pass;
+}

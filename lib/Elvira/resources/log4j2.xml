@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration monitorInterval="30" name="elvira-configuration">
+
+  <Appenders>
+    <Console name="stdout" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{DEFAULT} %-5p [%c{1}] %m%n"/>
+    </Console>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="org.hibernate" level="warn"/>
+    <!--
+	ignore warnings from hibernate's AbstractBatcher which throws
+	warnings when closing already closed result sets and
+	statements.  For some reason, the iterator we use isn't
+	handled properly in the hibernate layer since ResultSet.next()
+	will close when it reaches the end without hibernate knowing
+	about it. (?)  This makes hibernate's AbstractBatcher class
+	throw warnings about trying to close and already closed
+	statement.  We can ignore these by setting the level for that
+	class to ERROR which will only report ERRORS or worse.  (WARN
+	is less serious than ERROR)
+	-->
+    <Logger name="org.hibernate.jdbc.AbstractBatcher" level="error" />
+    <Logger name="org.hibernate.util.JDBCExceptionReporter" level="off" />
+
+    <Logger name="org.mchange" level="warn"/>
+    <Logger name="com.opensymphony" level="error"/>
+
+    <Root level="error">
+      <AppenderRef ref="stdout" level="warn"/>
+    </Root>
+  </Loggers>
+  
+</Configuration>

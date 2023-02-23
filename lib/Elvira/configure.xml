@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project  name="configure-elvira" default="help" basedir=".">
+
+  <available file="version" property="install-dir" value="${basedir}"/>
+  
+  <!-- PRINT SOME HELP -->
+  <target name="help" description="print some help about the build file and the settable properties">
+    <echo>
+      Configure an Elvira java installation. This will create the
+      appropriate configuration files from templates and a properties
+      file.
+
+      Common targets:
+
+      configure:
+
+          Generate configuration files by merging templates with
+          replacement values.
+
+      check-config:
+
+          Check existing configuration files for common errors such as
+          missing files or files containing unexpanded values.
+
+
+      The following properties are settable
+
+      env.properties:
+
+          The file containing the properties used to create the
+          configuration file(s). This property is required for
+          configuration.
+
+      install-dir
+
+          The top level directory of the Elvira installation.  This
+          property is required for configuration and for checking an
+          existing configuration from outside an installation.
+
+      config-dir
+
+          The directory where the configuration files should be
+          written. This defaults to install-dir/resources
+
+      template-dir
+
+          The directory containing the template files. This property
+          defaults to the value of install-dir/resources.
+
+    </echo>
+
+  </target>
+
+  <!-- INIT SOME PROPERTIES USED THROUGHOUT THE FILE -->
+  <target name="init">
+    <property name="install-dir.absolute"  location="${install-dir}" />
+    <property name="config-dir.absolute" location="${config-dir}"/>
+
+    <filterset id="all.filtering">
+      <filter token="root.dir" value="${install-dir}"/>
+      <filtersfile file="${env.properties}"/>
+    </filterset>
+
+    <mapper id="template-rename" type="regexp" from="^(.*)\.template" to="\1" />
+  </target>
+
+  <target name="-env-properties-not-required">
+    <property name="env.properties.required" value="false" />
+  </target>
+
+  <target name="-env-properties-required">
+    <property name="env.properties.required" value="true" />
+  </target>
+
+  <!-- CHECK REQUIRED PROPERTIES ARE SET AND MAKE SENSE -->
+  <target name="check-prerequisites" description="Check that the required arguments are set" >
+    <!-- default to requiring env.properties to be set -->
+    
+    <property name="env.properties.required" value="true" />
+    <fail unless="install-dir" >
+      Elvira installation directory not specified. Please add -Dinstall-dir=DIRECTORY to command line
+    </fail>
+
+    <available property="install-dir.exists" file="${install-dir}" />
+    <fail unless="install-dir.exists">
+      Elvira installation directory ${install-dir} doesn't exist or is not readable
+    </fail>
+
+    <property name="config-dir" value="${install-dir}/resources" />
+    <fail unless="config-dir" >
+      configuration directory not specified. Please add -Dconfig-dir=DIRECTORY to command line
+    </fail>
+
+    <!-- TODO explicitly check readable and writable -->
+    <available property="config-dir.exists" file="${config-dir}" />
+    <fail unless="config-dir.exists">
+      configuration directory ${config-dir} doesn't exist or is not readable
+    </fail>
+
+    <fail>
+      <condition>
+	<not>
+          <or>
+            <isset property="env.properties" />
+            <isfalse value="${env.properties.required}" />
+          </or>
+	</not>
+      </condition>
+      environment parameters not set. Please add -Denv.properties=FILE to command line
+    </fail>
+
+    <!-- TODO explicitly check readable -->
+    <available property="properties.exist" file="${env.properties}" />
+    <fail>
+      <condition>
+	<not>
+          <or>
+            <isset property="properties.exist" />
+            <isfalse value="${env.properties.required}" />
+          </or>
+	</not>
+      </condition>
+      file ${env.properties} doesn't exist or is not readable
+    </fail>
+
+    <property name="template-dir" value="${config-dir}" />
+
+    <!-- TODO explicitly check readable and writable -->
+    <available property="template-dir.exists" file="${template-dir}" />
+    <fail unless="template-dir.exists">
+      configuration directory ${template-dir} doesn't exist or is not readable
+    </fail>
+
+    <fileset id="template.files" dir="${template-dir}" >
+      <include name="*.template" />
+    </fileset>
+
+    <resourcecount refid="template.files" property="template.files.count" />
+    <condition property="template.files.found">
+      <not>
+        <equals arg1="${template.files.count}" arg2="0" />
+      </not>
+    </condition>
+
+    <fail unless="template.files.found">
+      No template files found in ${template-dir}
+    </fail>
+
+  </target>
+
+  <!-- GENERATE CONFIG FILES FROM TEMPLATES -->
+  <target name="generate-files" depends="-env-properties-required,check-prerequisites,init">
+
+    <copy todir="${config-dir}" overwrite="true">
+      <mappedresources>
+        <fileset refid="template.files" />
+        <!-- strip off .template suffix -->
+        <mapper refid="template-rename" />
+      </mappedresources>
+      <filterset refid="all.filtering" />
+    </copy>
+
+  </target>
+
+  <!-- TOP TARGET -->
+  <target name="configure"
+          description="generate configuration files based on templates"
+          depends="generate-files, check-config" />
+
+  <!-- CHECK CONFIG FILES ARE CORRECT -->
+  <target name="check-config"
+          description="verifies that the generated configuration files are correct"
+          depends="-env-properties-not-required, check-prerequisites, init">
+
+    <!-- these are the original template files, just with different names ...-->
+    <mappedresources id="config.files.names">
+      <fileset refid="template.files" />
+      <!-- strip off .template suffix -->
+      <mapper refid="template-rename" />
+    </mappedresources>
+
+    <!-- ... so we need to make a list of the files, one per line ... -->
+    <pathconvert pathsep="${line.separator}" property="config.files.list" refid="config.files.names">
+      <compositemapper>
+        <globmapper from="*" to="${config-dir}/*" />
+      </compositemapper>
+    </pathconvert>
+
+    <!-- ... then "dereference" them by name with a resourcelist -->
+    <resourcelist id="config.files">
+      <string>${config.files.list}</string>
+    </resourcelist>
+
+    <!-- check that each template file has a corresponding configuration file -->
+    <restrict id="config.files.exist">
+      <resources refid="config.files" />
+      <exists />
+    </restrict>
+
+    <difference id="config.files.missing">
+      <resources refid="config.files" />
+      <resources refid="config.files.exist" />
+    </difference>
+
+    <pathconvert pathsep="${line.separator}" property="config.files.missing-to-print" refid="config.files.missing" />
+
+    <fail>
+      <condition>
+        <resourcecount refid="config.files.missing" when="greater" count="0" />
+      </condition>
+      Expected configuration files were not found:
+${config.files.missing-to-print}
+
+Please run configure target.
+
+    </fail>
+
+    <!--  check for missed expansions -->
+    <restrict id="config.files.unexpanded">
+      <resources refid="config.files" />
+      <containsregexp expression="@[\w.-]+@" casesensitive="false" />
+    </restrict>
+
+    <pathconvert pathsep="${line.separator} " property="config.files.unexpanded-to-print" refid="config.files.unexpanded" />
+
+    <fail>
+      <condition>
+        <resourcecount refid="config.files.unexpanded" when="greater" count="0" />
+      </condition>
+      Config files were found with unexpanded configuration values:
+${config.files.unexpanded-to-print}      
+
+Please check that the environment properties file "${env.properties}" contains all the required replacement values.
+
+    </fail>
+    
+  </target>
+ 
+</project>

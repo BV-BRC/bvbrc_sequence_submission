@@ -1,0 +1,241 @@
+#!/usr/bin/env perl
+
+use strict;
+
+use File::Basename;
+my $SCRIPT = basename($0);
+
+# #########################################################################
+#
+#    Usage Declaration
+#
+# #########################################################################
+my $USAGE = qq~
+USAGE: $SCRIPT [options]
+~;
+
+# #########################################################################
+#
+#   Helptext Declaration
+#
+# #########################################################################
+my $HELPTEXT = qq~
+
+$SCRIPT - Interact with Elvira primer plates
+$USAGE
+
+HELP:
+
+  --help (-h)      : Displays this help text.
+  --version (-V)   : Displays the current version information.
+  --usage (-u)     : Displays usage information.
+
+OPTIONS:
+
+  --verbose (-v)   : Write extra messages to the console.
+
+OUTPUT:
+
+  --output <file>  : Direct all console messages to this file.
+
+~;
+
+# #########################################################################
+#
+#    Version Strings
+#
+# #########################################################################
+my $VERSION = "0.90";
+my $BUILD = (qw/$Revision: 729 $/ )[1];
+
+# #########################################################################
+#
+#    Load Modules
+#
+# #########################################################################
+
+#
+#  Use Local Modules First
+#
+use FindBin qw($Bin);
+use lib "$Bin";
+use lib "$Bin/../perllib";
+
+#
+#  Standard USE statments
+#
+use Getopt::Long;
+use Term::ReadKey; #For passwords
+use IO::Handle;
+
+#
+#  Load JavaRunner
+#
+use Java::Runner;
+
+# #########################################################################
+#
+#    Subroutine Declarations
+#
+# #########################################################################
+
+sub getPassword(;$);
+
+# #########################################################################
+#
+#    Global Variables
+#
+# #########################################################################
+
+my %overrides = ();
+
+#
+#  Option Variables
+# 
+
+# Meta-Options
+my $show_help = undef;
+my $show_version = undef;
+my $show_usage = undef;
+
+# Devel Options
+my $cmd_check = undef;
+my $do_devel = undef;
+
+#
+#  Ouput Variables
+#
+my $be_verbose = undef;
+
+# #########################################################################
+#
+#    Command Line Option Parsing
+#
+# #########################################################################
+$Getopt::Long::ignorecase = 0;
+$Getopt::Long::autoabbrev = 0;
+my $parsed = GetOptions(
+                         'v|verbose' => \$be_verbose,
+                         
+                         'h|help' => \$show_help,
+                         'V|version' => \$show_version,
+                         'u|usage' => \$show_usage,
+                         
+                         # Devel Options
+                         'cmd-check' => \$cmd_check,
+                         'devel' => \$do_devel,
+                        );
+
+# #########################################################################
+#
+#    Handle command line failures
+#
+# #########################################################################
+
+unless ($parsed)
+{
+    print STDERR "Invalid command-line.\n";
+    print STDERR $USAGE;
+    
+    exit(1);
+}
+
+# #########################################################################
+#
+#    Display Usage/Helptext/Version
+#
+# #########################################################################
+
+if ($show_help)
+{
+    print STDOUT $HELPTEXT;
+    exit(0);   
+}
+if ($show_version)
+{
+    printf STDOUT "%s v%s [Build %s]\n", $SCRIPT, $VERSION, $BUILD;
+    exit(0);
+}
+if ($show_usage)
+{
+    print STDOUT $USAGE;
+    exit(0);
+}
+
+# #########################################################################
+#
+#    Handle command line options
+#
+# #########################################################################
+
+if ($be_verbose)
+{
+    $overrides{"plateTool.consoleLog"} = "yes";
+}
+
+# #########################################################################
+#
+#    Set up the JavaRunner
+#
+# #########################################################################
+
+my $runner = Java::Runner->new();
+
+$runner->useJavaPreset("8");
+
+$runner->clearClassPath();
+
+$runner->initialHeapSize(80);
+$runner->maxHeapSize(256);
+
+if ($do_devel)
+{
+    $runner->addClassLocation("$Bin/../bin");
+}
+
+$runner->addJarDirectory("$Bin/../lib/platetools");
+$runner->addClassLocation("$Bin/../resources");
+$runner->addJarDirectory("$Bin/../lib/log4j");
+$runner->addJarDirectory("$Bin/../lib/glklib");
+$runner->addJarDirectory("$Bin/../lib/jlims");
+$runner->addJarDirectory("$Bin/../lib/hibernate");
+$runner->addJarDirectory("$Bin/../lib/jillion");
+$runner->addJarDirectory("$Bin/../lib/elvirautilities");
+$runner->addJarDirectory("$Bin/../lib/euid");
+$runner->addJarDirectory("$Bin/../lib/jdbc");
+$runner->addJarDirectory("$Bin/../lib/jodatime");
+$runner->addJarDirectory("$Bin/../lib/apache-poi");
+$runner->addJarDirectory("$Bin/../lib/swing-extra");
+$runner->addJarDirectory("$Bin/../lib/apache-commons");
+
+$runner->mainClass("org.jcvi.platetools.PlateTool");
+
+#
+#  Apply user overrides
+#
+for my $property (sort keys %overrides)
+{
+    my $value = $overrides{$property};
+    
+    $runner->setProperty($property, $value);
+}
+
+#
+#  Add file targets
+#
+while(my $file = shift)
+{
+    $runner->addParameters($file);
+}
+
+# #########################################################################
+#
+#    Kick off the JavaRunner
+#
+# #########################################################################
+
+if ($cmd_check) { printf("CMD> %s\n", $runner->getCommandLine()); }
+else
+{
+    $runner->execute();
+}

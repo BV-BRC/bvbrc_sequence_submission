@@ -1,0 +1,276 @@
+# this file contains host names, species names and common names
+# mapped to a normalized host.
+# The format is KEY\tVALUE and extraneous spaces are NOT stripped.
+# Empty lines or lines beginning with # are ignored.
+N/A	other
+American black duck	avian
+red-necked grebe	avian
+mallard-black duck hybrid	avian
+Swan	avian
+American Wigeon	avian
+sanderling	avian
+snow goose	avian
+Poultry	avian
+long-tailed duck	avian
+rufous-necked stint	avian
+American coot	avian
+Ruddy turnstone	avian
+pintail	avian
+Sooty Tern	avian
+widgeon	avian
+black-legged kittiwake	avian
+slaty backed gull	avian
+green-winged teal	avian
+Snow Goose	avian
+garganey	avian
+Silver gull	avian
+Turkey	avian
+Common Teal	avian
+pink-footed goose	avian
+black duck	avian
+common teal	avian
+American Black Duck	avian
+ruddy turnstone	avian
+Wedge-tailed shearwater	avian
+herring gull	avian
+Whiskered tern	avian
+Northern pintail	avian
+Wedge-tailed Shearwater	avian
+American Coot	avian
+Sharp-tailed Sandpiper	avian
+shorebird	avian
+Pacific black duck	avian
+Cygnus Cygnus	avian
+Black-headed Gull	avian
+green -wing teal	avian
+Blue-winged Teal	avian
+Green Wing Teal	avian
+Red-necked Stint	avian
+human	human
+Homo sapiens	human
+horse	equine
+Bufflehead	avian
+Northern Pintail	avian
+Lesser Noddy	avian
+northern shoveler	avian
+teal	avian
+Eurasian Coot	avian
+Pacfic Black duck	avian
+black-headed gull	avian
+Starling	avian
+Mallard	avian
+glaucous-winged gull	avian
+red-headed duck	avian
+Chukar	avian
+Common Eider	avian
+Northern shoveler	avian
+American green-winged Teal	avian
+white-rumped sandpiper	avian
+black scoter	avian
+yellow-legged gull	avian
+chicken	avian
+Common Scoter	avian
+American widgeon	avian
+mallard	avian
+quail	avian
+Muscovy duck	avian
+Sanderling	avian
+western grebe	avian
+Ring-necked Duck	avian
+ring-necked duck	avian
+Canada Goose	avian
+Shoveler	avian
+redhead duck	avian
+wood duck	avian
+rock dove	avian
+Chestnut teal	avian
+red knot	avian
+shearwater	avian
+gull	avian
+swine	swine
+white fronted goose	avian
+tufted duck	avian
+Snow goose	avian
+Swine	swine
+hooded merganser	avian
+laughing gull	avian
+Cygnus Olor	avian
+Blue-winged teal	avian
+Ring-necked duck	avian
+Chicken	avian
+knot	avian
+coot	avian
+Laughing gull	avian
+Red-necked stint	avian
+Ostrich	avian
+Least sandpiper	avian
+scaup	avian
+shoveler	avian
+swan	avian
+Eurasian Wigeon	avian
+Muscovy Duck	avian
+turkey	avian
+Dunlin	avian
+dunlin	avian
+Iceland gull	avian
+Swine, Human	other
+mew gull	avian
+American wigeon	avian
+redhead	avian
+Redhead	avian
+Blue-Winged Teal	avian
+snipe	avian
+green-winged Teal	avian
+White-winged Scoter	avian
+Australian shelduck	avian
+cinnamon teal	avian
+greater white-fronted goose	avian
+thick-billed murre	avian
+equine	equine
+bufflehead	avian
+wedge-tailed shearwater	avian
+Goose	avian
+Black Duck	avian
+Shorebird	avian
+common goldeneye	avian
+Armenian gull	avian
+Northern Shoveler	avian
+great black-backed gull	avian
+pintail duck	avian
+Aves	avian
+Gray teal	avian
+Avian	avian
+Tern	avian
+common murre	avian
+avian	avian
+lesser black-backed gull	avian
+Wood Duck	avian
+Mute Swan	avian
+Emu	avian
+camel	other
+Herring Gull	avian
+American green-winged teal	avian
+Turnstone	avian
+common snipe	avian
+Green-winged Teal	avian
+Gadwall	avian
+Teal	avian
+canvasback	avian
+greater scaup	avian
+Quail	avian
+gadwall	avian
+Duck	avian
+glaucous gull-herring gull hybrid	avian
+Pheasant	avian
+Pink-footed Goose	avian
+canada goose	avian
+ring-billed gull	avian
+horned puffin	avian
+baikal teal	avian
+glaucous gull	avian
+Guinea fowl	avian
+Guinea Fowl	avian
+greylag goose	avian
+Pintail	avian
+silkie chicken	avian
+Environment	other
+Peking duck	avian
+Equine	equine
+environmental	other
+lesser scaup	avian
+duck	avian
+California gull	avian
+white-fronted goose	avian
+common coot	avian
+Barnacle Goose	avian
+Black kite	avian
+Shearwater	avian
+Unknown	other
+Mediterranean gull	avian
+Bewick's Swan	avian
+Green-winged teal	avian
+guinea fowl	avian
+slaty-backed gull	avian
+Canada goose	avian
+ruddy duck	avian
+unknown	other
+Pekin Duck	avian
+Wigeon	avian
+blue-winged teal	avian
+Human	human
+northern pintail	avian
+Longtail Duck	avian
+least sandpiper	avian
+semi-palmated sandpiper	avian
+semipalmated sandpiper	avian
+common eider	avian
+Cackling goose	avian
+environment	other
+Pacific Black duck	avian
+green winged teal	avian
+domestic duck	avian
+green-wing teal	avian
+double-crested cormorant	avian
+Anas flavirostris	avian
+Anas georgica	avian
+Anas platyrhynchos x Cairina moschata	avian
+Anser sp.	avian
+Dendrocygna viduata	avian
+Fulica rufifrons	avian
+Halichoerus grypus	other
+Himantopus mexicanus	avian
+Melanitta perspicillata	avian
+Numida meleagris	avian
+Sus scrofa	swine
+black-necked stilt	avian
+domestic duck x muscovy duck	avian
+goose	avian
+grey seal	other
+helmeted guineafowl	avian
+long tailed duck	avian
+pig	swine
+red-fronted coot	avian
+surf scoter	avian
+white-faced whistling duck	avian
+yellow-billed pintail	avian
+yellow-billed teal	avian
+Anas acuta	avian
+Anas americana	avian
+Anas carolinensis	avian
+Anas clypeata	avian
+Anas discors	avian
+Anas platyrhynchos	avian
+Anas rubripes	avian
+Anser caerulescens	avian
+Aythya affinis	avian
+Larus argentatus	avian
+Larus atricilla	avian
+Larus delawarensis	avian
+Larus glaucescens	avian
+Sus scrofa domesticus	swine
+sandpiper	avian
+Steller sea lion	other
+Anas cyanoptera	avian
+Calidris minutilla	avian
+Calidris sp.	avian
+Arenaria interpres	avian
+Mareca strepera	avian
+Eumetopias jubatus	other
+Ruddy Turnstone	avian
+Norway rat	other
+Rattus norvegicus	other
+harbor seal	other
+Phoca vitulina	other
+Calidris alpina	avian
+Calidris pusilla	avian
+black-bellied tree duck	avian
+Dendrocygna autumnalis	avian
+Sandpiper	avian
+Glaucous-Winged Gull	avian
+Somateria mollissima	avian
+Green-Winged Teal	avian
+Larus canus	avian
+Mew Gull	avian
+Larus hyperboreus	avian
+Glaucous Gull	avian
+
