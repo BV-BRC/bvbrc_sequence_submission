@@ -1,0 +1,431 @@
+#!/usr/bin/env perl
+
+use strict;
+use File::Basename;
+use Getopt::Long;
+
+my $SCRIPT = basename($0);
+
+# #########################################################################
+#
+#    Usage Declaration
+#
+# #########################################################################
+my $USAGE = qq~
+USAGE: $SCRIPT [-S SERVER] [-U USER -P PASSWORD] <PLATE BARCODE>
+               [--region-name-index <INDEX>]
+~;
+
+# #########################################################################
+#
+#   Helptext Declaration
+#
+# #########################################################################
+my $HELPTEXT = qq~
+
+$SCRIPT - PURPOSE
+$USAGE
+
+OPTIONS:
+--region-name-index       : The index of the region name within the database
+                            name, as delimited by underscores.  If this is
+                            set to a negative number, the index will be 
+                            calculated from the end of the name with -1 
+                            meaning the final delimited part of the name.
+                            (Default: 0)
+                            
+--output (-o) <FILE>      : Write output to the given file.  If '-' is given
+                            the output will be written to STDOUT. 
+                            (Default: '-' ; Write to STDOUT)
+
+Standard Database Options
+-S : Database Server Name
+-U : User name
+-P : Password
+
+~;
+
+# #########################################################################
+#
+#    Version Strings
+#
+# #########################################################################
+my $VERSION = "0.81";
+my $BUILD = (qw/$Revision: 813 $/ )[1];
+
+
+# #########################################################################
+#
+#    Load Modules
+#
+# #########################################################################
+
+#
+#  Use Local Modules First
+#
+use FindBin qw($Bin);
+use lib "$Bin";
+use lib "$Bin/../perllib";
+
+#
+#  Standard USE statments
+#
+use DBI;
+use IO::File;
+
+# For debugging
+use Data::Dumper;
+use Term::ReadKey;  # For askDbPass
+
+# #########################################################################
+#
+#    Database Queries
+#
+# #########################################################################
+
+my $PULL_PLATE = q~
+SELECT forward_sample.apcon_id amplicon_guid,
+       forward_sample.apcon_design_id amplicon_design_id,
+       forward_sample.apcon_name amplicon_name,
+       forward_sample.primr_sequence forward_primer_sequence,
+       forward_sample.apcon_begin_pt_in_roi forward_primer_begin,
+       reverse_sample.primr_sequence reverse_primer_sequence,
+       reverse_sample.apcon_end_pt_in_roi reverse_primer_end,
+       forward_sample.roint_name segment_name,
+       forward_sample.primr_id forward_primer_guid,
+       reverse_sample.primr_id reverse_primer_guid,
+       forward_sample.apcon_create_date fwd_primer_create_date,
+       reverse_sample.apcon_create_date rev_primer_create_date,
+       forward_sample.cntnr_barcode as cntnr_Barcode,
+       forward_sample.coord_row as well_row,
+       forward_sample.coord_column as well_col
+  FROM ((SELECT apcon_id,
+                primr_sequence,
+                a.apcon_begin_pt_in_roi,
+                pd.primr_id,
+                lv.lkuvl_value,
+                r.roint_name,
+                a.apcon_create_date,
+                c.cntnr_barcode,
+                co.coord_row,
+                co.coord_column,
+                a.apcon_design_id,
+                a.apcon_name
+           FROM jlims.container               c,
+                jlims.content                 n,
+                jlims.coordinate              co,
+                jlims.primer_set              ps,
+                jlims.amplicon                a,
+                jlims.region_of_interest      r,
+                reseq.primer_designset_detail pdd,
+                reseq.primer_design           pd,
+                jlims.lookup_Value            lv
+          WHERE 1 = 1
+            AND c.cntnr_barcode = ?
+            AND c.cntnr_create_date = n.cntnt_create_date
+            AND n.cntnt_cntnr_id = c.cntnr_id
+            AND n.cntnt_coord_id = co.coord_id
+            AND n.cntnt_prmst_id = ps.prmst_id
+            AND ps.prmst_apcon_id = apcon_id
+            AND a.apcon_roint_id = r.roint_id
+            AND pdd.pdsdt_apcon_id = a.apcon_id
+            AND pdd.pdsdt_primr_id = pd.primr_id
+            AND pd.primr_direction_lkuvl_id = lv.lkuvl_id
+            AND lkuvl_value = 'forward') forward_sample),
+       (SELECT apcon_id,
+               primr_sequence,
+               a.apcon_end_pt_in_roi,
+               pd.primr_id,
+               lv.lkuvl_value,
+               r.roint_name,
+               a.apcon_create_date,
+               c.cntnr_barcode,
+               co.coord_row,
+               co.coord_column,
+                a.apcon_design_id,
+                a.apcon_name
+          FROM jlims.container               c,
+               jlims.content                 n,
+               jlims.coordinate              co,
+               jlims.primer_set              ps,
+               jlims.amplicon                a,
+               jlims.region_of_interest      r,
+               reseq.primer_designset_detail pdd,
+               reseq.primer_design           pd,
+               jlims.lookup_Value            lv
+         WHERE 1 = 1
+           AND c.cntnr_barcode = ?
+           AND c.cntnr_create_date = n.cntnt_create_date
+           AND n.cntnt_cntnr_id = c.cntnr_id
+           AND n.cntnt_coord_id = co.coord_id
+           AND n.cntnt_prmst_id = ps.prmst_id
+           AND ps.prmst_apcon_id = apcon_id
+           AND a.apcon_roint_id = r.roint_id
+           AND pdd.pdsdt_apcon_id = a.apcon_id
+           AND pdd.pdsdt_primr_id = pd.primr_id
+           AND pd.primr_direction_lkuvl_id = lv.lkuvl_id
+           AND lkuvl_value = 'reverse') reverse_sample
+ WHERE forward_sample.apcon_id = reverse_sample.apcon_id(+)
+~;
+
+# #########################################################################
+#
+#    Set up the TIGR::Foundation
+#
+# #########################################################################
+my $VERSION_STRING = "$VERSION (Build $BUILD)";
+
+# #########################################################################
+#
+#    Global Variables
+#
+# #########################################################################
+
+my %vectorseq = (
+                  'M13' => 
+                  { 
+                   'F' => 'TGTAAAACGACGGCCAGT',
+                   'R' => 'CAGGAAACAGCTATGACC',
+                  },
+                );
+
+my $plate_id;
+
+#
+#  Option Variables
+# 
+my $vector = "M13";
+my $region_index = 0;
+
+# Database Defaults
+my $DEFAULT_DB_SERVER = "ORAPROD";
+my $DEFAULT_DB_USER = "guest";
+my $DEFAULT_DB_PASS = "guest";
+
+# Standard Database Options
+my $db_server = undef;
+my $db_user   = undef;
+my $db_pass   = undef;
+
+#
+#  Ouput Variables
+#
+my $output_filename;
+my $quiet_mode = undef;
+my $output = undef;
+
+# #########################################################################
+#
+#    Command Line Option Parsing
+#
+# #########################################################################
+my $crap = &TIGR_GetOptions(
+                     # Standard Database Options
+                     'S=s' => \$db_server,
+                     'U=s' => \$db_user,
+                     'P=s' => \$db_pass,
+                     
+                     'region-name-index=i' => \$region_index,
+                     'vector=s' => \$vector,
+                     
+                     'q|quiet' => \$quiet_mode,
+                     'o|output=s' => \$output_filename,
+                    ) || &printUsageInfoAndExit() ;
+
+$plate_id = shift;
+&printUsageInfoAndExit() unless (defined $plate_id);
+
+# #########################################################################
+#
+#    Resolve the database credentials
+#
+# #########################################################################
+
+if (defined $db_user) { 
+    $db_pass = &askDbPass() unless ($db_pass); 
+}
+else { 
+    ($db_user, $db_pass) = ($DEFAULT_DB_USER, $DEFAULT_DB_PASS); 
+}
+
+$db_server = $DEFAULT_DB_SERVER unless defined $db_server;
+
+# #########################################################################
+#
+#    Get a GLKLib Object
+#
+# #########################################################################
+
+# Check that database variables are set
+die "You must specify a database server with -S <server> or a passfile.\n" unless defined $db_server;
+die "You must supply a username with -U <username> or a passfile.\n" unless defined $db_user;
+die "No password specified.\n" unless defined $db_pass;
+
+print STDERR "Connecting to Database: $db_server as $db_user.\n\n";
+
+my $db = DBI->connect( 'dbi:Oracle:' . $db_server,
+                       $db_user,
+                       $db_pass 
+                     ) or die "Failed to make connection to database: $DBI::errstr.\n";
+
+# #########################################################################
+#
+#    Get a handle to the output
+#
+# #########################################################################
+
+# Interpret the following as aliases for console output
+if (defined $output_filename and (($output_filename eq "-") or 
+                                  ($output_filename eq "STDOUT")))
+{
+    $output_filename = undef;
+}
+
+#
+#  Route output to /dev/null if we requested quiet mode
+#
+if ($quiet_mode)
+{
+    $output_filename = "/dev/null";
+}
+
+if (defined $output_filename)
+{
+    $output = new IO::File;
+    $output->open($output_filename, "w");
+}
+else
+{
+    $output = new IO::Handle;
+    $output->fdopen(1, "w");  
+}
+
+# #########################################################################
+#
+#    Do Work
+#
+# #########################################################################
+
+
+my $pull_st = $db->prepare($PULL_PLATE);
+
+$pull_st->execute($plate_id, $plate_id);
+
+my %plate = ();
+
+ROW: while (my @row = $pull_st->fetchrow_array())
+{
+    my $well = sprintf("%s%02d", $row[13], $row[14]);
+    
+    #
+    #  Check to see if a region (segment) exists.  If it doesn't, then we're an empty or
+    #  corrupt row.
+    #
+    unless (defined $row[7])
+    {
+        next ROW;
+    }
+    
+    #
+    #  Extract the region (segment)
+    #
+    my @region_parts = split(/_/, $row[7]);
+    my $local_region_index = ($region_index < 0) ? scalar(@region_parts) + $region_index : $region_index;
+    ($plate{$well}{'region'}) = ($region_parts[$local_region_index] or 'NULL');
+        
+    $plate{$well}{'amplicon_id'} = $row[2];
+    
+    $plate{$well}{'f_id'} = $row[8];
+    $plate{$well}{'f_seq'} = $vectorseq{$vector}{'F'} . $row[3];
+    $plate{$well}{'f_coord'} = $row[4];
+    
+    $plate{$well}{'r_id'} = $row[9];
+    $plate{$well}{'r_seq'} = $vectorseq{$vector}{'R'} . $row[5];
+    $plate{$well}{'r_coord'} = $row[6];
+        
+}
+
+foreach my $well (sort keys %plate)
+{
+    $output->print(join(',', $well,
+                             $plate{$well}{'amplicon_id'},
+                             $plate{$well}{'region'},
+                             $plate{$well}{'f_id'},
+                             $plate{$well}{'f_seq'},
+                             $plate{$well}{'f_coord'},
+                             $plate{$well}{'r_id'},
+                             $plate{$well}{'r_seq'},
+                             $plate{$well}{'r_coord'},
+                  ), "\n");
+}
+sub TIGR_GetOptions(@) {
+    my @user_options = @_;
+
+    my $appendlog_var = undef;
+    my $logfile_var = undef;
+    my $debug_var = undef;
+    my $version_var = undef;
+    my $help_var = undef;
+    my $depend_var = undef;
+
+    # these foundation options support the defaults
+    my @foundation_options = (
+        "version|V" => \$version_var,
+         "help|h" => \$help_var,
+      );
+
+      Getopt::Long::Configure('no_ignore_case');
+      my $getopt_code = eval 'GetOptions (@user_options, @foundation_options)';
+
+      if ( (defined $help_var) && ($help_var =~ /^(.*)$/) )  {
+         print STDERR $HELPTEXT;
+         exit(0);
+      }
+
+      if ( (defined $version_var) && ($version_var =~ /^(.*)$/) ) {
+         print STDERR $VERSION_STRING;
+         exit(0);
+      }
+      return $getopt_code;
+}
+
+sub printUsageInfoAndExit {
+    print STDERR $USAGE;
+    exit(0);
+}
+
+sub askDbPass {
+    print "Password: ";
+    # Don't echo the keystrokes to the user
+    ReadMode 'noecho';
+    
+    # Read the password
+    my $pass = ReadLine 0;
+
+     # If there is a password, strip off any trailing CR, LF, or CRLFs.
+    #  Note: In theory, a password can end in a space, so we don't want to
+    #        use 'chomp()'
+    if (defined($pass) && $pass =~ /\S/) {
+        $pass =~ s/[\r\n]+$//;
+    }
+    else {
+        die "Empty password.\n";
+    }
+    # Advance the line on the tty, and put it back to normal mode.
+    print "\n";
+    ReadMode 'normal';
+ 
+    # Return the password
+    return($pass);    
+}
+
+# #########################################################################
+#
+#    End the Script
+#
+# #########################################################################
+END
+{
+    $db->disconnect() if defined $db;
+    $output->close() if defined $output;
+}

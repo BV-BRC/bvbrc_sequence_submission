@@ -1,0 +1,16 @@
+ARCH=lx26-amd64
+SGE_CELL=jcvi
+SGE_EXECD_PORT=6445
+SGE_QMASTER_PORT=6444
+SGE_ROOT=/usr/local/sge_current
+PATH=${SGE_ROOT}/bin/${ARCH}:/usr/local/bin:/usr/local/common:$PATH
+SYBASE=/usr/local/packages/sybase
+
+MAILTO=dkatzel@jcvi.org
+ 0 0 * * * /usr/local/devel/VIRIFX/software/Deployment/elvira-1.5-563ce19b-20190313-1040/bin/ncbiFtpFluSampleReport -D giv,giv2,giv3,swiv,piv --filePrefix fluStatus --ftpServer ftp.jcvi.org --ftpPassfile /usr/local/devel/VIRIFX/software/Deployment/elvira-1.5-563ce19b-20190313-1040/resources/viralPassFile --ftpDir /private/infl_a_virus_status
+ 
+# JIRA sample tracking scripts
+10 0 * * * /usr/local/devel/VIRIFX/software/SampleTracking/cron/update-field.sh batch_id customfield_10730
+2 0 * * * /usr/local/devel/VIRIFX/software/SampleTracking/cron/update-field.sh species_code customfield_11330
+52 23 * * * /usr/local/devel/VIRIFX/software/SampleTracking/cron/update-normalized_host.sh
+55 23 * * * /usr/local/devel/VIRIFX/software/SampleTracking/cron/update-TaxonIds.sh

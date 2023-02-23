@@ -1,0 +1,5 @@
+version  = 1.5
+revision = 563ce19b
+build    = 20190313-1040
+host     = localhost.localdomain
+user     = jchriste
