@@ -502,6 +502,12 @@ if __name__ == "__main__":
     #Copy submission.xml file to manual submission folder
     shutil.copy(submission_file, os.path.join(manual_sample_submission_dir, "submission.xml"))
 
+    #Create submit.ready files
+    with open(os.path.join(sample_submission_dir, "submit.ready"), "w") as sr:
+      pass
+    with open(os.path.join(manual_sample_submission_dir, "submit.ready"), "w") as sr:
+      pass
+
   #Change working directory back to output folder
   os.chdir(output_dir)
   
