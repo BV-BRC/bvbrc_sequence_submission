@@ -47,7 +47,7 @@ SEQUENCE_VALIDATION_FOLDER_NAME = "SequenceValidation"
 GENBANK_SUBMISSION_FOLDER_NAME = "Genbank_submission_files"
 METADATA_FILE_NAME = "metadata.csv"
 SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
-SUBMISSION_FILE_HEADER = ["Sample_Identiifer", "Sequence_File_Name", "Unique_Sequence_Identifier", "VIGOR_Segment", "VIGOR_Run_Status", "VIGOR_Status_Code", "FLAN_Segment", "FLAN_Status", "FLAN_Messages"]
+SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "FLAN_Messages"]
 
 def createFASTAFile(output_dir, job_data):
   input_file = os.path.join(output_dir, "input.fasta")
@@ -439,6 +439,7 @@ if __name__ == "__main__":
         flan_status = result["result"]
         flan_message = result["message"]
         flan_segment = result["segment"]
+        flan_serotype = result["serotype"]
 
         fasta_segment = os.path.splitext(result["fasta_name"])[0].split("-")[1]
         if fasta_segment != result["segment"]:
@@ -447,25 +448,17 @@ if __name__ == "__main__":
       
       cds_result = parseCDSFile(os.path.join(sample_dir, "%s-%s.cds" %(sample_identifier, segment)))  
       if len(cds_result) > 0:
-        submission_report_writer.writerow({"Sample_Identiifer": sample_identifier, 
-                                           "Sequence_File_Name": "%s-%s.fasta" %(sample_identifier, segment), 
-                                           "Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
-                                           "VIGOR_Segment": cds_result.get("gene", ""),
-                                           "VIGOR_Run_Status": vigor_status,
-                                           "VIGOR_Status_Code": "OK",
-                                           "FLAN_Segment": flan_segment,
-                                           "FLAN_Status": flan_status,
-                                           "FLAN_Messages": flan_message})
+        submission_report_writer.writerow({"Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
+                                           "Segment": "VIGOR:%s, FLAN:%s" %(cds_result.get("gene", ""), flan_segment),
+                                           "Serotype": flan_serotype,
+                                           "Status": "VIGOR:%s, FLAN:%s" %(vigor_status, flan_status),
+                                           "FLAN_Messages": flan_message.replace("\n", ", ")})
       else:
-        submission_report_writer.writerow({"Sample_Identiifer": sample_identifier,
-                                           "Sequence_File_Name": "%s-%s.fasta" %(sample_identifier, segment),
-                                           "Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
-                                           "VIGOR_Segment": "",
-                                           "VIGOR_Run_Status": "ERROR",
-                                           "VIGOR_Status_Code": "",
-                                           "FLAN_Segment": flan_segment,
-                                           "FLAN_Status": flan_status,
-                                           "FLAN_Messages": flan_message})
+        submission_report_writer.writerow({"Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
+                                           "Segment": "VIGOR: , FLAN:%s" %(flan_segment),
+                                           "Serotype": flan_serotype,
+                                           "Status": "VIGOR:ERROR, FLAN:%s" %(flan_status),
+                                           "FLAN_Messages": flan_message.replace("\n", ", ")})
 
     #Create template file with authour information
     sbt_file = os.path.join(sample_submission_dir, sample_identifier + ".sbt")
