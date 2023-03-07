@@ -46,7 +46,7 @@ DATABASE_MAP = {"influenza a virus": "flua", "influenza b virus": "flub", "influ
 SEQUENCE_VALIDATION_FOLDER_NAME = "SequenceValidation"
 GENBANK_SUBMISSION_FOLDER_NAME = "Genbank_submission_files"
 METADATA_FILE_NAME = "metadata.csv"
-SUBMISSION_REPORT_FILE_NAME = "Sequence_Submission_Report.csv"
+SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
 SUBMISSION_FILE_HEADER = ["Sample_Identiifer", "Sequence_File_Name", "Unique_Sequence_Identifier", "VIGOR_Segment", "VIGOR_Run_Status", "VIGOR_Status_Code", "FLAN_Segment", "FLAN_Status", "FLAN_Messages"]
 
 def createFASTAFile(output_dir, job_data):
