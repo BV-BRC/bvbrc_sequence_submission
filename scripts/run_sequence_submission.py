@@ -392,7 +392,7 @@ if __name__ == "__main__":
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
 
     #Validate sample FASTA file with FLAN
-    flan_validator_file = os.path.join(sample_dir, "validator.flu")
+    flan_validator_file = os.path.join(sample_dir, sample_identifier + ".flu")
     isFLANSuccessful = runFluValidator(fasta_file, flan_validator_file)
 
     #Annotate sample FASTA file with VIGOR4
