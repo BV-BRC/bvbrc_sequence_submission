@@ -68,6 +68,13 @@
       "type": "string"
     },
     {
+      "id": "numberOfSequences",
+      "label": "Number of sequences in the submission",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
       "id": "output_path",
       "label": "Output Folder",
       "required": 1,
