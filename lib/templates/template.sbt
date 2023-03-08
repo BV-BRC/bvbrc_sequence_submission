@@ -2,23 +2,17 @@ Submit-block ::= {
   contact {
     contact {
       name name {
-        last "Doe",
-        first "John",
-        middle "",
-        initials "",
-        suffix "",
-        title ""
+        last "Support",
+        first "BV-BRC"
       },
       affil std {
-        affil "NIH",
-        div "NCBI",
-        city "Bethesda",
-        sub "MD",
+        affil "Bacterial and Viral Bioinformatics Resource Center (BV-BRC)",
+        div "University of Chicago",
+        city "Chicago",
+        sub "IL",
         country "USA",
-        street "10 Center Dr",
-        email "jdoe@nih.gov",
-        phone "301-402-8219",
-        postal-code "20895"
+        email "gbsubmit@bvbrc.gov",
+        postal-code "60637"
       }
     }
   },
@@ -28,7 +22,7 @@ Submit-block ::= {
         %cit_authors_names%  
       },
       affil std {
-        %cit_authors_affil%
+        affil "%authors_affil%"
       }
     }
   },
@@ -52,7 +46,7 @@ Seqdesc ::= user {
   data {
     {
       label str "AdditionalComment",
-      data str "ALT EMAIL:jdoe@nih.gov"
+      data str "ALT EMAIL:gbsubmit@bvbrc.gov"
     }
   }
 }

@@ -46,8 +46,8 @@ DATABASE_MAP = {"influenza a virus": "flua", "influenza b virus": "flub", "influ
 SEQUENCE_VALIDATION_FOLDER_NAME = "SequenceValidation"
 GENBANK_SUBMISSION_FOLDER_NAME = "Genbank_submission_files"
 METADATA_FILE_NAME = "metadata.csv"
-SUBMISSION_REPORT_FILE_NAME = "Sequence_Submission_Report.csv"
-SUBMISSION_FILE_HEADER = ["Sample_Identiifer", "Sequence_File_Name", "Unique_Sequence_Identifier", "VIGOR_Segment", "VIGOR_Run_Status", "VIGOR_Status_Code", "FLAN_Segment", "FLAN_Status", "FLAN_Messages"]
+SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
+SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "Messages"]
 
 def createFASTAFile(output_dir, job_data):
   input_file = os.path.join(output_dir, "input.fasta")
@@ -211,7 +211,7 @@ def createSubmissionXML(submission_file, sample_identifier, date):
   with open(submission_file, "wb") as sf:
     sf.write(pretty_xml)
 
-def createSBTFile(sbt_file, metadata):
+def createSBTFile(sbt_file, metadata, authors_affiliation, consortium):
   template = open(SBT_TEMPLATE, "r")
   sbt_string = template.read()
   template.close()
@@ -234,18 +234,15 @@ def createSBTFile(sbt_file, metadata):
       middle = names[1][0] + "." 
     cit_auth_names += cit_auth_name_template %(names[len(names)-1], names[0], middle)
 
-  #cit > authors > affil
-  cit_auth_affil_template = ("affil \"%s\",\n" 
-                    "        div \"%s\",\n" 
-                    "        city \"%s\",\n" 
-                    "        sub \"%s\",\n" 
-                    "        country \"%s\",\n" 
-                    "        street \"%s\",\n" 
-                    "        postal-code \"%s\"\n")
+  if consortium:
+    cit_auth_names += ("{\n"
+                   "      name\n"
+                   "        consortium \"%s\"\n"
+                   "    },") %(consortium)
 
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
-    sf.write(sbt_string.replace("%cit_authors_names%", cit_auth_names[:-1]).replace("%cit_authors_affil%", cit_auth_affil_template %("", "", "", "", "", "", "")))
+    sf.write(sbt_string.replace("%cit_authors_names%", cit_auth_names[:-1]).replace("%authors_affil%", authors_affiliation))
 
 def createZipFile(submission_folder, is_manual_submission):
   zf = zipfile.ZipFile(os.path.join(submission_folder, "submission.zip"), "w", zipfile.ZIP_DEFLATED)
@@ -292,6 +289,9 @@ if __name__ == "__main__":
   os.chdir(output_dir)
 
   output_file = os.path.join(output_dir, job_data["output_file"] + ".txt")
+
+  authors_affiliation = job_data["affiliation"] if "affiliation" in job_data else ""
+  consortium = job_data["consortium"] if "consortium" in job_data else ""
 
   #Create input file
   input_file = createFASTAFile(output_dir, job_data)
@@ -392,7 +392,7 @@ if __name__ == "__main__":
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
 
     #Validate sample FASTA file with FLAN
-    flan_validator_file = os.path.join(sample_dir, "validator.flu")
+    flan_validator_file = os.path.join(sample_dir, sample_identifier + ".flu")
     isFLANSuccessful = runFluValidator(fasta_file, flan_validator_file)
 
     #Annotate sample FASTA file with VIGOR4
@@ -439,37 +439,32 @@ if __name__ == "__main__":
         flan_status = result["result"]
         flan_message = result["message"]
         flan_segment = result["segment"]
+        flan_serotype = result["serotype"]
 
         fasta_segment = os.path.splitext(result["fasta_name"])[0].split("-")[1]
         if fasta_segment != result["segment"]:
           flan_message += "ERROR: Sequence segment id (%s) doesn't match with flu annotation segment result (%s)" %(fasta_segment, result["segment"]) 
           flan_status = "Failed"
-      
+
       cds_result = parseCDSFile(os.path.join(sample_dir, "%s-%s.cds" %(sample_identifier, segment)))  
+      segment_result = flan_segment if flan_segment == cds_result.get("gene", "") else "VIGOR:%s, FLAN:%s" %(cds_result.get("gene", ""), flan_segment)
+      status_result = flan_status if flan_status == "VALID" and vigor_status == "Processed" else "VIGOR:%s, FLAN:%s" %(vigor_status, flan_status)
       if len(cds_result) > 0:
-        submission_report_writer.writerow({"Sample_Identiifer": sample_identifier, 
-                                           "Sequence_File_Name": "%s-%s.fasta" %(sample_identifier, segment), 
-                                           "Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
-                                           "VIGOR_Segment": cds_result.get("gene", ""),
-                                           "VIGOR_Run_Status": vigor_status,
-                                           "VIGOR_Status_Code": "OK",
-                                           "FLAN_Segment": flan_segment,
-                                           "FLAN_Status": flan_status,
-                                           "FLAN_Messages": flan_message})
+        submission_report_writer.writerow({"Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
+                                           "Segment": segment_result,
+                                           "Serotype": flan_serotype,
+                                           "Status": status_result,
+                                           "Messages": flan_message.replace("\n", ", ")})
       else:
-        submission_report_writer.writerow({"Sample_Identiifer": sample_identifier,
-                                           "Sequence_File_Name": "%s-%s.fasta" %(sample_identifier, segment),
-                                           "Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
-                                           "VIGOR_Segment": "",
-                                           "VIGOR_Run_Status": "ERROR",
-                                           "VIGOR_Status_Code": "",
-                                           "FLAN_Segment": flan_segment,
-                                           "FLAN_Status": flan_status,
-                                           "FLAN_Messages": flan_message})
+        submission_report_writer.writerow({"Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
+                                           "Segment": "VIGOR: , FLAN:%s" %(flan_segment),
+                                           "Serotype": flan_serotype,
+                                           "Status": "VIGOR:ERROR, FLAN:%s" %(flan_status),
+                                           "Messages": flan_message.replace("\n", ", ")})
 
     #Create template file with authour information
     sbt_file = os.path.join(sample_submission_dir, sample_identifier + ".sbt")
-    createSBTFile(sbt_file, value["row"])
+    createSBTFile(sbt_file, value["row"], authors_affiliation, consortium)
 
     #Copy template file to manual submission folder
     sbt_file_ms = os.path.join(manual_sample_submission_dir, sample_identifier + ".sbt")
@@ -501,6 +496,12 @@ if __name__ == "__main__":
 
     #Copy submission.xml file to manual submission folder
     shutil.copy(submission_file, os.path.join(manual_sample_submission_dir, "submission.xml"))
+
+    #Create submit.ready files
+    with open(os.path.join(sample_submission_dir, "submit.ready"), "w") as sr:
+      pass
+    with open(os.path.join(manual_sample_submission_dir, "submit.ready"), "w") as sr:
+      pass
 
   #Change working directory back to output folder
   os.chdir(output_dir)
