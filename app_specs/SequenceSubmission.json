@@ -35,9 +35,37 @@
     {
       "id": "metadata",
       "label": "Metadata as a workspace file of csv",
-      "required": 0,
+      "required": 1,
       "default": null,
       "type": "wsid"
+    },
+    {
+      "id": "affiliation",
+      "label": "Affiliation info of the submitter",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "consortium",
+      "label": "Consortium info of the submitter",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "country",
+      "label": "Country info of the submitter",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "phoneNumber",
+      "label": "Phone number of the submitter",
+      "required": 0,
+      "default": null,
+      "type": "string"
     },
     {
       "id": "output_path",
