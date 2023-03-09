@@ -48,6 +48,7 @@ GENBANK_SUBMISSION_FOLDER_NAME = "Genbank_submission_files"
 METADATA_FILE_NAME = "metadata.csv"
 SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
 SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "Messages"]
+SEGMENT_MAP = {"1": "PB2", "2": "PB1", "3": "PA", "4": "HA", "5": "NP", "6": "NA", "7": "MP", "8": "NS"}
 
 def createFASTAFile(output_dir, job_data):
   input_file = os.path.join(output_dir, "input.fasta")
@@ -442,7 +443,7 @@ if __name__ == "__main__":
         flan_serotype = result["serotype"]
 
         fasta_segment = os.path.splitext(result["fasta_name"])[0].split("-")[1]
-        if fasta_segment != result["segment"]:
+        if SEGMENT_MAP[fasta_segment] != result["segment"]:
           flan_message += "ERROR: Sequence segment id (%s) doesn't match with flu annotation segment result (%s)" %(fasta_segment, result["segment"]) 
           flan_status = "Failed"
 
