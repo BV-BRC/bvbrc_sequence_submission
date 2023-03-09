@@ -11,7 +11,7 @@ Submit-block ::= {
         city "Chicago",
         sub "IL",
         country "USA",
-        email "gbsubmit@bvbrc.gov",
+        email "gbsubmit@bvbrc.org",
         postal-code "60637"
       }
     }
@@ -46,7 +46,7 @@ Seqdesc ::= user {
   data {
     {
       label str "AdditionalComment",
-      data str "ALT EMAIL:gbsubmit@bvbrc.gov"
+      data str "ALT EMAIL:gbsubmit@bvbrc.org"
     }
   }
 }
