@@ -20,8 +20,8 @@ import zipfile
 #
 top = os.getenv("KB_TOP")
 
-template_deployed = os.path.join(top, "lib2", "templates", "template.sbt")
-template_dev = os.path.join(top, "modules2", "bvbrc_sequence_submission", "lib", "templates", "template.sbt")
+template_deployed = os.path.join(top, "lib", "templates", "template.sbt")
+template_dev = os.path.join(top, "modules", "bvbrc_sequence_submission", "lib", "templates", "template.sbt")
 template_local = os.path.join("/home", "ac.mkuscuog", "git", "bvbrc_sequence_submission", "lib", "templates", "template.sbt")
 if os.path.exists(template_deployed):
   SBT_TEMPLATE = template_deployed
