@@ -20,8 +20,8 @@ import zipfile
 #
 top = os.getenv("KB_TOP")
 
-template_deployed = os.path.join(top, "lib", "templates", "template.sbt")
-template_dev = os.path.join(top, "modules", "bvbrc_sequence_submission", "lib", "templates", "template.sbt")
+template_deployed = os.path.join(top, "lib2", "templates", "template.sbt")
+template_dev = os.path.join(top, "modules2", "bvbrc_sequence_submission", "lib", "templates", "template.sbt")
 template_local = os.path.join("/home", "ac.mkuscuog", "git", "bvbrc_sequence_submission", "lib", "templates", "template.sbt")
 if os.path.exists(template_deployed):
   SBT_TEMPLATE = template_deployed
@@ -212,14 +212,12 @@ def createSubmissionXML(submission_file, sample_identifier, date):
   with open(submission_file, "wb") as sf:
     sf.write(pretty_xml)
 
-def createSBTFile(sbt_file, metadata, authors_affiliation, consortium):
+def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_name):
   template = open(SBT_TEMPLATE, "r")
   sbt_string = template.read()
   template.close()
 
-  #cit > authors > names
-  authors = metadata.get("Authors", "").split(",")
-  cit_auth_name_template = ("{\n" 
+  auth_name_template = ("{\n" 
                    "          name name {\n"  
                    "            last \"%s\",\n" 
                    "            first \"%s\",\n" 
@@ -227,23 +225,57 @@ def createSBTFile(sbt_file, metadata, authors_affiliation, consortium):
                    "          }\n"
                    "        },") 
 
-  cit_auth_names = ""
-  for author in authors:
-    names = author.strip().split(" ")
-    middle = ""
-    if len(names) > 2:
-      middle = names[1][0] + "." 
-    cit_auth_names += cit_auth_name_template %(names[len(names)-1], names[0], middle)
+  #cit > authors > names | affil
+  cit_auth_names = auth_name_template %(last_name, first_name, "") 
 
-  if consortium:
-    cit_auth_names += ("{\n"
-                   "      name\n"
-                   "        consortium \"%s\"\n"
-                   "    },") %(consortium)
+  authors_affiliation = ""
+  if authors_affiliation:
+    ci_auth_affil = (",\n"
+            "        affil \"%s\"\n"
+            "      }\n") %(affiliation)
+
+  publication_title = metadata.get("Publication Title", "")
+
+  #Handle pub info based on published or unpublished
+  pub_info = ""
+  if publication_title == "" or publication_title == 'NA':
+    #pub > gen
+    pub_gen_template = ("gen {\n"
+                   "       cit \"unpublished\",\n"
+                   "       authors {\n"
+                   "         names std {\n"
+                   "           %pub_auth_names%\n"
+                   "         }\n"
+                   "       },\n"
+                   "       title \"Direct Submission (BVBRC)\"\n"
+                   "     }\n")
+    #pub > gen > authors
+    authors = metadata.get("Authors", "").split(",")
+    pub_auth_names = ""
+    for author in authors:
+      names = author.strip().split(" ")
+      middle = ""
+      if len(names) > 2:
+        middle = names[1][0] + "." 
+      pub_auth_names += auth_name_template %(names[len(names)-1], names[0], middle)
+
+    if consortium:
+      pub_auth_names += ("{\n"
+                     "      name\n"
+                     "        consortium \"%s\"\n"
+                     "    },") %(consortium)
+
+    pub_info = pub_gen_template.replace("%pub_auth_names%", pub_auth_names[:-1])
+  else:
+    pmid = metadata.get("Publication PMID", "")
+    pub_info = "pmid %s" %(pmid)
 
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
-    sf.write(sbt_string.replace("%cit_authors_names%", cit_auth_names[:-1]).replace("%authors_affil%", authors_affiliation))
+    sf.write(sbt_string.replace("%cit_authors_names%", cit_auth_names[:-1])
+                       .replace("%authors_affil%", authors_affiliation)
+                       .replace("%pub_info%", pub_info)
+            )
 
 def createZipFile(submission_folder, is_manual_submission):
   zf = zipfile.ZipFile(os.path.join(submission_folder, "submission.zip"), "w", zipfile.ZIP_DEFLATED)
@@ -291,6 +323,9 @@ if __name__ == "__main__":
 
   output_file = os.path.join(output_dir, job_data["output_file"] + ".txt")
 
+  first_name = job_data["first_name"]
+  last_name = job_data["last_name"]
+  email = job_data["email"]
   authors_affiliation = job_data["affiliation"] if "affiliation" in job_data else ""
   consortium = job_data["consortium"] if "consortium" in job_data else ""
 
@@ -465,7 +500,7 @@ if __name__ == "__main__":
 
     #Create template file with authour information
     sbt_file = os.path.join(sample_submission_dir, sample_identifier + ".sbt")
-    createSBTFile(sbt_file, value["row"], authors_affiliation, consortium)
+    createSBTFile(sbt_file, value["row"], authors_affiliation, consortium, first_name, last_name)
 
     #Copy template file to manual submission folder
     sbt_file_ms = os.path.join(manual_sample_submission_dir, sample_identifier + ".sbt")

@@ -3,7 +3,11 @@ Submit-block ::= {
     contact {
       name name {
         last "Support",
-        first "BV-BRC"
+        first "BV-BRC",
+        middle "",
+        initials "",
+        suffix "",
+        title ""
       },
       affil std {
         affil "Bacterial and Viral Bioinformatics Resource Center (BV-BRC)",
@@ -11,6 +15,7 @@ Submit-block ::= {
         city "Chicago",
         sub "IL",
         country "USA",
+        street "5801 S Ellis Ave",
         email "gbsubmit@bvbrc.org",
         postal-code "60637"
       }
@@ -20,25 +25,14 @@ Submit-block ::= {
     authors {
       names std {
         %cit_authors_names%  
-      },
-      affil std {
-        affil "%authors_affil%"
-      }
+      }%authors_affil%
     }
   },
   subtype new
 }
 Seqdesc ::= pub {
   pub {
-    gen {
-      cit "unpublished",
-      authors {
-        names std {
-          %cit_authors_names%
-        }
-      },
-      title "Direct Submission (BVBRC)"
-    }
+    %pub_info% 
   }
 }
 Seqdesc ::= user {

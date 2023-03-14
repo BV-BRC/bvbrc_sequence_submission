@@ -1,7 +1,15 @@
 {
-    "input_source": "fasta_file",
-    "metadata": "/olson@patricbrc.org/PATRIC-QA/DataSets/SequenceSubmission/data_submission_metadata.csv",
-    "output_file": "test_1",
-    "output_path": "/mkuscuog@bvbrc/home/submission/output",
-    "input_fasta_file": "/olson@patricbrc.org/PATRIC-QA/DataSets/SequenceSubmission/Sequence_submission_example.fasta"
+  "country": "USA",
+  "numberOfSequences": 32,
+  "output_file": "container_validation_test",
+  "consortium": "",
+  "output_path": "/mkuscuog@bvbrc/home/submission/output",
+  "first_name": "Mehmet",
+  "last_name": "Kuscuoglu",
+  "email": "mkuscuog@jcvi.org",
+  "affiliation": "JCVI",
+  "input_source": "fasta_file",
+  "metadata": "/olson@patricbrc.org/PATRIC-QA/DataSets/SequenceSubmission/sequence_submission_metadata_test.csv",
+  "phoneNumber": "",
+  "input_fasta_file": "/olson@patricbrc.org/PATRIC-QA/DataSets/SequenceSubmission/sequence_submission_test.fasta"
 }

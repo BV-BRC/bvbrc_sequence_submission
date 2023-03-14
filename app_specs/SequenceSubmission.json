@@ -47,6 +47,27 @@
       "type": "string"
     },
     {
+      "id": "first_name",
+      "label": "First name of the submitter",
+      "required": 1,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "last_name",
+      "label": "Last name of the submitter",
+      "required": 1,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "email",
+      "label": "Email of the submitter",
+      "required": 1,
+      "default": null,
+      "type": "string"
+    },
+    {
       "id": "consortium",
       "label": "Consortium info of the submitter",
       "required": 0,
