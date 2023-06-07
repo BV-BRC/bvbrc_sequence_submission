@@ -49,6 +49,7 @@ METADATA_FILE_NAME = "metadata.csv"
 SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
 SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "Messages"]
 SEGMENT_MAP = {"1": "PB2", "2": "PB1", "3": "PA", "4": "HA", "5": "NP", "6": "NA", "7": "MP", "8": "NS"}
+SRC_FILE_HEADER = ["Sequence_ID", "Organism", "Strain", "Country", "Host", "Collection-date", "Isolation-source", "Serotype"]
 
 def createFASTAFile(output_dir, job_data):
   input_file = os.path.join(output_dir, "input.fasta")
@@ -420,9 +421,28 @@ if __name__ == "__main__":
     #Create individual metadata file for the sample
     sample_metadata_file = os.path.join(sample_submission_dir, sample_identifier + ".src")
     with open(sample_metadata_file, "wb") as smf:
-      writer = csv.DictWriter(smf, fieldnames=value["header"])
+      writer = csv.DictWriter(smf, delimiter='\t', fieldnames=SRC_FILE_HEADER)
       writer.writeheader()
-      writer.writerow(value["row"])
+      
+      # Parse date in the correct format
+      date = value["row"]["Collection Date"]
+      dashCount = date.count('-')
+      if dashCount == 2:
+          date = datetime.strptime(date, '%d-%b-%y').strftime('%d-%b-%Y')
+      elif dashCount == 1:
+          date = datetime.strptime(date, '%b-%y').strftime('%b-%Y')
+      elif dashCount == 0:
+          date = datetime.strptime(date, '%y').strftime('%Y')
+
+      for fasta in value["fasta"]:
+          writer.writerow({"Sequence_ID": fasta["sequence_id"],
+                           "Organism": value["row"]["Organism"], 
+                           "Strain": value["row"]["Strain Name"], 
+                           "Country": value["row"]["Collection Country"], 
+                           "Host": value["row"]["Host"], 
+                           "Collection-date": date,
+                           "Isolation-source": value["row"]["Isolation Source"], 
+                           "Serotype": value["row"]["Subtype"]})
 
     #Copy metadata file to manual submission folder
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
