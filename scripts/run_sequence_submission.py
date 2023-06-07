@@ -272,7 +272,10 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
     pub_info = pub_gen_template.replace("%pub_auth_names%", pub_auth_names[:-1])
   else:
     pmid = metadata.get("Publication PMID", "")
-    pub_info = "pmid %s" %(pmid)
+    if pmid == "":
+      pub_info = ""
+    else:
+      pub_info = "pmid %s" %(pmid)
 
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:

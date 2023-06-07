@@ -25,7 +25,16 @@ Submit-block ::= {
     authors {
       names std {
         %cit_authors_names%  
-      }%authors_affil%
+      },
+      affil std {
+        affil "University of Chicago",
+        div "Bacterial and Viral Bioinformatics Resource Center (BV-BRC)",
+        city "Chicago",
+        sub "IL",
+        country "USA",
+        street "5801 S Ellis Ave",
+        postal-code "60637"
+      }
     }
   },
   subtype new
