@@ -201,7 +201,8 @@ def createSubmissionXML(submission_file, sample_identifier, date):
   #Create action part
   action = ET.SubElement(submission, "Action")
   add_files = ET.SubElement(action, "AddFiles", target_db="GenBank")
-  file = ET.SubElement(add_files, "File", file_path="%s.zip" %(sample_identifier))
+  file = ET.SubElement(add_files, "File", file_path="submission.zip")
+  ET.SubElement(file, "DataType").text = "genbank-submission-package"
   ET.SubElement(add_files, "Attribute", name="wizard").text = "BankIt_influenza_api"
   status = ET.SubElement(add_files, "Status")
   ET.SubElement(status, "Release")
