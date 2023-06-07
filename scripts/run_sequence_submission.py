@@ -45,6 +45,8 @@ VIGOR_REF_DB = os.path.join("/opt", "patric-common", "runtime", "vigor-4.1.20220
 DATABASE_MAP = {"influenza a virus": "flua", "influenza b virus": "flub", "influenza c virus": "fluc"}
 SEQUENCE_VALIDATION_FOLDER_NAME = "SequenceValidation"
 GENBANK_SUBMISSION_FOLDER_NAME = "Genbank_submission_files"
+SUBMISSION_FOLDER_NAME = "Submission"
+MANUAL_SUBMISSION_FOLDER_NAME = "ManualSubmission"
 METADATA_FILE_NAME = "metadata.csv"
 SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
 SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "Messages"]
@@ -375,6 +377,14 @@ if __name__ == "__main__":
   genbank_submission_dir = os.path.join(output_dir, GENBANK_SUBMISSION_FOLDER_NAME) 
   os.mkdir(genbank_submission_dir)
 
+  #Create submission folder
+  submission_dir = os.path.join(genbank_submission_dir, SUBMISSION_FOLDER_NAME)
+  os.mkdir(submission_dir) 
+
+  #Create manual submission folder
+  manual_submission_dir = os.path.join(genbank_submission_dir, MANUAL_SUBMISSION_FOLDER_NAME)
+  os.mkdir(manual_submission_dir)
+
   #Process sample submissions
   for sample_identifier, value in sample_info.items():
     print("Processing sample " + sample_identifier)
@@ -384,11 +394,11 @@ if __name__ == "__main__":
     os.mkdir(sample_dir)
 
     #Create sample submission folder for genbank
-    sample_submission_dir = os.path.join(genbank_submission_dir, sample_identifier + "-Submission")
+    sample_submission_dir = os.path.join(submission_dir, sample_identifier)
     os.mkdir(sample_submission_dir)
 
     #Create manual sample submission folder
-    manual_sample_submission_dir = os.path.join(genbank_submission_dir, sample_identifier + "-Manual-Submission")
+    manual_sample_submission_dir = os.path.join(manual_submission_dir, sample_identifier)
     os.mkdir(manual_sample_submission_dir)
 
     #Change working directory to sample submission folder
