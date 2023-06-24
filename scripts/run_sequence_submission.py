@@ -45,10 +45,13 @@ VIGOR_REF_DB = os.path.join("/opt", "patric-common", "runtime", "vigor-4.1.20220
 DATABASE_MAP = {"influenza a virus": "flua", "influenza b virus": "flub", "influenza c virus": "fluc"}
 SEQUENCE_VALIDATION_FOLDER_NAME = "SequenceValidation"
 GENBANK_SUBMISSION_FOLDER_NAME = "Genbank_submission_files"
+SUBMISSION_FOLDER_NAME = "Submission"
+MANUAL_SUBMISSION_FOLDER_NAME = "ManualSubmission"
 METADATA_FILE_NAME = "metadata.csv"
 SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
 SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "Messages"]
 SEGMENT_MAP = {"1": "PB2", "2": "PB1", "3": "PA", "4": "HA", "5": "NP", "6": "NA", "7": "MP", "8": "NS"}
+SRC_FILE_HEADER = ["Sequence_ID", "Organism", "Strain", "Country", "Host", "Collection-date", "Isolation-source", "Serotype"]
 
 def createFASTAFile(output_dir, job_data):
   input_file = os.path.join(output_dir, "input.fasta")
@@ -200,7 +203,8 @@ def createSubmissionXML(submission_file, sample_identifier, date):
   #Create action part
   action = ET.SubElement(submission, "Action")
   add_files = ET.SubElement(action, "AddFiles", target_db="GenBank")
-  file = ET.SubElement(add_files, "File", file_path="%s.zip" %(sample_identifier))
+  file = ET.SubElement(add_files, "File", file_path="submission.zip")
+  ET.SubElement(file, "DataType").text = "genbank-submission-package"
   ET.SubElement(add_files, "Attribute", name="wizard").text = "BankIt_influenza_api"
   status = ET.SubElement(add_files, "Status")
   ET.SubElement(status, "Release")
@@ -268,7 +272,10 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
     pub_info = pub_gen_template.replace("%pub_auth_names%", pub_auth_names[:-1])
   else:
     pmid = metadata.get("Publication PMID", "")
-    pub_info = "pmid %s" %(pmid)
+    if pmid == "":
+      pub_info = ""
+    else:
+      pub_info = "pmid %s" %(pmid)
 
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
@@ -373,6 +380,14 @@ if __name__ == "__main__":
   genbank_submission_dir = os.path.join(output_dir, GENBANK_SUBMISSION_FOLDER_NAME) 
   os.mkdir(genbank_submission_dir)
 
+  #Create submission folder
+  submission_dir = os.path.join(genbank_submission_dir, SUBMISSION_FOLDER_NAME)
+  os.mkdir(submission_dir) 
+
+  #Create manual submission folder
+  manual_submission_dir = os.path.join(genbank_submission_dir, MANUAL_SUBMISSION_FOLDER_NAME)
+  os.mkdir(manual_submission_dir)
+
   #Process sample submissions
   for sample_identifier, value in sample_info.items():
     print("Processing sample " + sample_identifier)
@@ -382,11 +397,11 @@ if __name__ == "__main__":
     os.mkdir(sample_dir)
 
     #Create sample submission folder for genbank
-    sample_submission_dir = os.path.join(genbank_submission_dir, sample_identifier + "-Submission")
+    sample_submission_dir = os.path.join(submission_dir, sample_identifier)
     os.mkdir(sample_submission_dir)
 
     #Create manual sample submission folder
-    manual_sample_submission_dir = os.path.join(genbank_submission_dir, sample_identifier + "-Manual-Submission")
+    manual_sample_submission_dir = os.path.join(manual_submission_dir, sample_identifier)
     os.mkdir(manual_sample_submission_dir)
 
     #Change working directory to sample submission folder
@@ -420,9 +435,28 @@ if __name__ == "__main__":
     #Create individual metadata file for the sample
     sample_metadata_file = os.path.join(sample_submission_dir, sample_identifier + ".src")
     with open(sample_metadata_file, "wb") as smf:
-      writer = csv.DictWriter(smf, fieldnames=value["header"])
+      writer = csv.DictWriter(smf, delimiter='\t', fieldnames=SRC_FILE_HEADER)
       writer.writeheader()
-      writer.writerow(value["row"])
+      
+      # Parse date in the correct format
+      date = value["row"]["Collection Date"]
+      dashCount = date.count('-')
+      if dashCount == 2:
+          date = datetime.strptime(date, '%d-%b-%y').strftime('%d-%b-%Y')
+      elif dashCount == 1:
+          date = datetime.strptime(date, '%b-%y').strftime('%b-%Y')
+      elif dashCount == 0:
+          date = datetime.strptime(date, '%y').strftime('%Y')
+
+      for fasta in value["fasta"]:
+          writer.writerow({"Sequence_ID": fasta["sequence_id"],
+                           "Organism": value["row"]["Organism"], 
+                           "Strain": value["row"]["Strain Name"], 
+                           "Country": value["row"]["Collection Country"], 
+                           "Host": value["row"]["Host"], 
+                           "Collection-date": date,
+                           "Isolation-source": value["row"]["Isolation Source"], 
+                           "Serotype": value["row"]["Subtype"]})
 
     #Copy metadata file to manual submission folder
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
