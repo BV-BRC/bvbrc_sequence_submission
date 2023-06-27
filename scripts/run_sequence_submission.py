@@ -445,7 +445,7 @@ if __name__ == "__main__":
           date = datetime.strptime(date, '%d-%b-%y').strftime('%d-%b-%Y')
       elif dashCount == 1:
           date = datetime.strptime(date, '%b-%y').strftime('%b-%Y')
-      elif dashCount == 0:
+      elif dashCount == 0 and len(date) == 2 and date != 'U':
           date = datetime.strptime(date, '%y').strftime('%Y')
 
       for fasta in value["fasta"]:
