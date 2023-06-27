@@ -82,7 +82,7 @@ def parseMetadataFile(metadata_file):
   reader = csv.DictReader(codecs.EncodedFile(mf, 'utf8', 'utf_8_sig'))
   for row in reader:
     val = {"fasta": [], "row": row, "header": reader.fieldnames}
-    data[row["Sample Identifier"]] = val
+    data[row["Sample Identifier"].strip()] = val
 
   mf.close()
   
