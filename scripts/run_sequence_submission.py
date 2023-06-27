@@ -82,7 +82,7 @@ def parseMetadataFile(metadata_file):
   reader = csv.DictReader(codecs.EncodedFile(mf, 'utf8', 'utf_8_sig'))
   for row in reader:
     val = {"fasta": [], "row": row, "header": reader.fieldnames}
-    data[row["Sample Identifier"]] = val
+    data[row["Sample Identifier"].strip()] = val
 
   mf.close()
   
@@ -242,7 +242,7 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
 
   #Handle pub info based on published or unpublished
   pub_info = ""
-  if publication_title == "" or publication_title == 'NA':
+  if publication_title == "" or publication_title == 'NA' or publication_title.lower() == 'unpublished':
     #pub > gen
     pub_gen_template = ("gen {\n"
                    "       cit \"unpublished\",\n"
@@ -445,7 +445,7 @@ if __name__ == "__main__":
           date = datetime.strptime(date, '%d-%b-%y').strftime('%d-%b-%Y')
       elif dashCount == 1:
           date = datetime.strptime(date, '%b-%y').strftime('%b-%Y')
-      elif dashCount == 0:
+      elif dashCount == 0 and len(date) == 2 and date != 'U':
           date = datetime.strptime(date, '%y').strftime('%Y')
 
       for fasta in value["fasta"]:
