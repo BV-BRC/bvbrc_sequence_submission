@@ -242,7 +242,7 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
 
   #Handle pub info based on published or unpublished
   pub_info = ""
-  if publication_title == "" or publication_title == 'NA':
+  if publication_title == "" or publication_title == 'NA' or publication_title.lower() == 'unpublished':
     #pub > gen
     pub_gen_template = ("gen {\n"
                    "       cit \"unpublished\",\n"
