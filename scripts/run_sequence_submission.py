@@ -364,7 +364,10 @@ if __name__ == "__main__":
   with open(input_file) as fasta_data:
     for values in parseFASTAFile(fasta_data):
       sample_id = values["sample_id"]
-      sample_info[sample_id]["fasta"].append(values) 
+      if sample_id in sample_info.keys():
+        sample_info[sample_id]["fasta"].append(values) 
+      else:
+        print("Sequence id %s does not exist in the metadata. Passing.\n" %(sample_id))
 
   #Create submission report file
   submission_report_file_path = os.path.join(output_dir, SUBMISSION_REPORT_FILE_NAME)
