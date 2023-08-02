@@ -445,7 +445,11 @@ if __name__ == "__main__":
       date = value["row"]["Collection Date"]
       dashCount = date.count('-')
       if dashCount == 2:
-          date = datetime.strptime(date, '%d-%b-%y').strftime('%d-%b-%Y')
+          year = date.rsplit('-', 1)[1];
+          if len(year) == 2:
+              date = datetime.strptime(date, '%d-%b-%y').strftime('%d-%b-%Y')
+          else:
+              date = datetime.strptime(date, '%d-%b-%Y').strftime('%d-%b-%Y')
       elif dashCount == 1:
           date = datetime.strptime(date, '%b-%y').strftime('%b-%Y')
       elif dashCount == 0 and len(date) == 2 and date != 'U':
