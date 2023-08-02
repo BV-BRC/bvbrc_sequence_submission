@@ -257,7 +257,7 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
     authors = metadata.get("Authors", "").split(",")
     pub_auth_names = ""
     for author in authors:
-      names = author.strip().split(" ")
+      names = re.findall(r'"(.*?)"', author.strip()) if "\"" in author else author.strip().split(" ")
       middle = ""
       if len(names) > 2:
         middle = names[1][0] + "." 
