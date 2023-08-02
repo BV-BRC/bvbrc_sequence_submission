@@ -455,15 +455,21 @@ if __name__ == "__main__":
       elif dashCount == 0 and len(date) == 2 and date != 'U':
           date = datetime.strptime(date, '%y').strftime('%Y')
 
+      # Remove serotype from strain name if exists
+      serotype = value["row"]["Subtype"].strip()
+      strain = value["row"]["Strain Name"].strip()
+      if len(serotype) != 0 and strain.endswith("(" + serotype + ")"):
+          strain = strain.replace("(" + serotype + ")", '')
+
       for fasta in value["fasta"]:
           writer.writerow({"Sequence_ID": fasta["sequence_id"],
                            "Organism": value["row"]["Organism"], 
-                           "Strain": value["row"]["Strain Name"], 
+                           "Strain": strain,
                            "Country": value["row"]["Collection Country"], 
                            "Host": value["row"]["Host"], 
                            "Collection-date": date,
                            "Isolation-source": value["row"]["Isolation Source"], 
-                           "Serotype": value["row"]["Subtype"]})
+                           "Serotype": serotype})
 
     #Copy metadata file to manual submission folder
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
