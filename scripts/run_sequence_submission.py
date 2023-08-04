@@ -238,11 +238,16 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
             "        affil \"%s\"\n"
             "      }\n") %(affiliation)
 
-  publication_title = metadata.get("Publication Title", "")
+  publication_title = metadata.get("Publication Title", "").strip()
+  pmid = metadata.get("Publication PMID", "").strip()
 
-  #Handle pub info based on published or unpublished
+  #Handle pub info based on PMID or unpublished
   pub_info = ""
-  if publication_title == "" or publication_title == 'NA' or publication_title.lower() == 'unpublished':
+  if pmid == "" or pmid == 'NA':
+    #Change publication title to Unpublished if not provided
+    if publication_title == "" or publication_title == "NA":
+      publication_title = "Unpublished"
+
     #pub > gen
     pub_gen_template = ("gen {\n"
                    "       cit \"unpublished\",\n"
@@ -251,17 +256,24 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
                    "           %pub_auth_names%\n"
                    "         }\n"
                    "       },\n"
-                   "       title \"Direct Submission (BVBRC)\"\n"
+                   "       title \"" + publication_title + "\"\n"
                    "     }\n")
+
     #pub > gen > authors
-    authors = metadata.get("Authors", "").split(",")
+    authors = metadata.get("Authors", "").strip()
     pub_auth_names = ""
-    for author in authors:
-      names = author.strip().split(" ")
-      middle = ""
-      if len(names) > 2:
-        middle = names[1][0] + "." 
-      pub_auth_names += auth_name_template %(names[len(names)-1], names[0], middle)
+
+    #Use submitter info as the author, if author(s) is empty in metadata
+    if authors == "":
+      pub_auth_names += auth_name_template %(last_name, first_name, "")
+    else:
+      author_list = authors.split(",")
+      for author in author_list:
+        names = re.findall(r'"(.*?)"', author.strip()) if "\"" in author else author.strip().split(" ")
+        middle = ""
+        if len(names) > 2:
+          middle = names[1][0] + "."
+        pub_auth_names += auth_name_template %(names[len(names)-1], names[0], middle)
 
     if consortium:
       pub_auth_names += ("{\n"
@@ -271,11 +283,7 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
 
     pub_info = pub_gen_template.replace("%pub_auth_names%", pub_auth_names[:-1])
   else:
-    pmid = metadata.get("Publication PMID", "")
-    if pmid == "":
-      pub_info = ""
-    else:
-      pub_info = "pmid %s" %(pmid)
+    pub_info = "pmid %s" %(pmid)
 
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
