@@ -44,6 +44,7 @@ Seqdesc ::= pub {
     %pub_info% 
   }
 }
+%address_info%
 Seqdesc ::= user {
   type str "Submission",
   data {

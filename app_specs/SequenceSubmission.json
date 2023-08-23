@@ -89,6 +89,34 @@
       "type": "string"
     },
     {
+      "id": "street",
+      "label": "Street of the submitter location",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "postal_code",
+      "label": "Postal code of the submitter location",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "city",
+      "label": "City of the submitter location",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
+      "id": "state",
+      "label": "State of the submitter location",
+      "required": 0,
+      "default": null,
+      "type": "string"
+    },
+    {
       "id": "numberOfSequences",
       "label": "Number of sequences in the submission",
       "required": 0,

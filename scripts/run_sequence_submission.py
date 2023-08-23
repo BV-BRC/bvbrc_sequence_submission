@@ -216,7 +216,19 @@ def createSubmissionXML(submission_file, sample_identifier, date):
   with open(submission_file, "wb") as sf:
     sf.write(pretty_xml)
 
-def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_name):
+def createSBTFile(sbt_file, metadata, job_data):
+  first_name = job_data["first_name"]
+  last_name = job_data["last_name"]
+  email = job_data["email"]
+  affiliation = job_data["affiliation"] if "affiliation" in job_data else ""
+  consortium = job_data["consortium"] if "consortium" in job_data else ""
+
+  street = job_data["street"] if "street" in job_data else ""
+  city = job_data["city"] if "city" in job_data else ""
+  state = job_data["state"] if "state" in job_data else ""
+  postal_code = job_data["postal_code"] if "postal_code" in job_data else ""
+  country = job_data["country"] if "country" in job_data else ""
+
   template = open(SBT_TEMPLATE, "r")
   sbt_string = template.read()
   template.close()
@@ -232,12 +244,6 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
   #cit > authors > names | affil
   cit_auth_names = auth_name_template %(last_name, first_name, "") 
 
-  authors_affiliation = ""
-  if authors_affiliation:
-    ci_auth_affil = (",\n"
-            "        affil \"%s\"\n"
-            "      }\n") %(affiliation)
-
   publication_title = metadata.get("Publication Title", "").strip()
   pmid = metadata.get("Publication PMID", "").strip()
 
@@ -245,8 +251,8 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
   pub_info = ""
   if pmid == "" or pmid == 'NA':
     #Change publication title to Unpublished if not provided
-    if publication_title == "" or publication_title == "NA":
-      publication_title = "Unpublished"
+    if publication_title == "" or publication_title == "NA" or publication_title == "Unpublished" or publication_title == "unpublished":
+      publication_title = "Direct Submission (BVBRC)"
 
     #pub > gen
     pub_gen_template = ("gen {\n"
@@ -285,11 +291,38 @@ def createSBTFile(sbt_file, metadata, affiliation, consortium, first_name, last_
   else:
     pub_info = "pmid %s" %(pmid)
 
+  #Handle address info under new pub descriptuon
+  address_info = ""
+  if street != "" and city != "" and state != "" and postal_code != "":
+    address_info = ("Seqdesc ::= pub {\n"
+                    "  pub {\n"
+                    "    gen {\n"
+                    "      cit \"unpublished\",\n"
+                    "      authors {\n"
+                    "        names std {\n"
+                    "          %s\n"
+                    "        },\n"
+                    "        affil\n"
+                    "          std {\n"
+                    "            affil \"%s\" ,\n"
+                    "            city \"%s\" ,\n"
+                    "            sub \"%s\" ,\n"
+                    "            country \"%s\" ,\n"
+                    "            street \"%s\" ,\n"
+                    "            postal-code \"%s\" ,\n"
+                    "            email \"%s\"\n"
+                    "          }\n"
+                    "        },\n"
+                    "      title \"Direct Submission\"\n"
+                    "    }\n"
+                    "  }\n"
+                    "}\n") %(cit_auth_names[:-1], affiliation, city, state, country, street, postal_code, email)
+
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
     sf.write(sbt_string.replace("%cit_authors_names%", cit_auth_names[:-1])
-                       .replace("%authors_affil%", authors_affiliation)
                        .replace("%pub_info%", pub_info)
+                       .replace("%address_info%", address_info)
             )
 
 def createZipFile(submission_folder, is_manual_submission):
@@ -337,12 +370,6 @@ if __name__ == "__main__":
   os.chdir(output_dir)
 
   output_file = os.path.join(output_dir, job_data["output_file"] + ".txt")
-
-  first_name = job_data["first_name"]
-  last_name = job_data["last_name"]
-  email = job_data["email"]
-  authors_affiliation = job_data["affiliation"] if "affiliation" in job_data else ""
-  consortium = job_data["consortium"] if "consortium" in job_data else ""
 
   #Create input file
   input_file = createFASTAFile(output_dir, job_data)
@@ -555,7 +582,7 @@ if __name__ == "__main__":
 
     #Create template file with authour information
     sbt_file = os.path.join(sample_submission_dir, sample_identifier + ".sbt")
-    createSBTFile(sbt_file, value["row"], authors_affiliation, consortium, first_name, last_name)
+    createSBTFile(sbt_file, value["row"], job_data)
 
     #Copy template file to manual submission folder
     sbt_file_ms = os.path.join(manual_sample_submission_dir, sample_identifier + ".sbt")
