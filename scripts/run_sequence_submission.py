@@ -251,8 +251,8 @@ def createSBTFile(sbt_file, metadata, job_data):
   pub_info = ""
   if pmid == "" or pmid == 'NA':
     #Change publication title to Unpublished if not provided
-    if publication_title == "" or publication_title == "NA":
-      publication_title = "Unpublished"
+    if publication_title == "" or publication_title == "NA" or publication_title == "Unpublished" or publication_title == "unpublished":
+      publication_title = "Direct Submission (BVBRC)"
 
     #pub > gen
     pub_gen_template = ("gen {\n"
