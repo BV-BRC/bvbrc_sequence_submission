@@ -291,38 +291,16 @@ def createSBTFile(sbt_file, metadata, job_data):
   else:
     pub_info = "pmid %s" %(pmid)
 
-  #Handle address info under new pub descriptuon
-  address_info = ""
-  if street != "" and city != "" and state != "" and postal_code != "":
-    address_info = ("Seqdesc ::= pub {\n"
-                    "  pub {\n"
-                    "    gen {\n"
-                    "      cit \"unpublished\",\n"
-                    "      authors {\n"
-                    "        names std {\n"
-                    "          %s\n"
-                    "        },\n"
-                    "        affil\n"
-                    "          std {\n"
-                    "            affil \"%s\" ,\n"
-                    "            city \"%s\" ,\n"
-                    "            sub \"%s\" ,\n"
-                    "            country \"%s\" ,\n"
-                    "            street \"%s\" ,\n"
-                    "            postal-code \"%s\" ,\n"
-                    "            email \"%s\"\n"
-                    "          }\n"
-                    "        },\n"
-                    "      title \"Direct Submission\"\n"
-                    "    }\n"
-                    "  }\n"
-                    "}\n") %(cit_auth_names[:-1], affiliation, city, state, country, street, postal_code, email)
-
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
-    sf.write(sbt_string.replace("%cit_authors_names%", cit_auth_names[:-1])
+    sf.write(sbt_string.replace("%affiliation%", affiliation)
+                       .replace("%street%", street)
+                       .replace("%city%", city)
+                       .replace("%state%", state)
+                       .replace("%country%", country)
+                       .replace("%zipcode%", postal_code)
+                       .replace("%cit_authors_names%", cit_auth_names[:-1])
                        .replace("%pub_info%", pub_info)
-                       .replace("%address_info%", address_info)
             )
 
 def createZipFile(submission_folder, is_manual_submission):

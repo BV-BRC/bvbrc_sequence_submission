@@ -10,14 +10,14 @@ Submit-block ::= {
         title ""
       },
       affil std {
-        affil "Bacterial and Viral Bioinformatics Resource Center (BV-BRC)",
-        div "University of Chicago",
-        city "Chicago",
-        sub "IL",
-        country "USA",
-        street "5801 S Ellis Ave",
+        affil "%affiliation%",
+        div "",
+        city "%city%",
+        sub "%state%",
+        country "%country%",
+        street "%street%",
         email "gbsubmit@bvbrc.org",
-        postal-code "60637"
+        postal-code "%zipcode%"
       }
     }
   },
@@ -27,13 +27,13 @@ Submit-block ::= {
         %cit_authors_names%  
       },
       affil std {
-        affil "University of Chicago",
-        div "Bacterial and Viral Bioinformatics Resource Center (BV-BRC)",
-        city "Chicago",
-        sub "IL",
-        country "USA",
-        street "5801 S Ellis Ave",
-        postal-code "60637"
+        affil "%affiliation%",
+        div "",
+        city "%city%",
+        sub "%state%",
+        country "%country%",
+        street "%street%",
+        postal-code "%zipcode%"
       }
     }
   },
@@ -44,7 +44,7 @@ Seqdesc ::= pub {
     %pub_info% 
   }
 }
-%address_info%
+Seqdesc ::= comment "This submission was made by the Bacterial and Viral Bioinformatics Resource Center (BV-BRC) on behalf of %affiliation%. This work was supported by the National Institute of Allergy and Infectious Diseases, National Institutes of Health, Department of Health and Human Services, under Contract No. 75N93019C00076, awarded to the University of Chicago."
 Seqdesc ::= user {
   type str "Submission",
   data {
