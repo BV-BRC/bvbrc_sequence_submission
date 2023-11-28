@@ -29,6 +29,7 @@ elif os.path.exists(template_dev):
   SBT_TEMPLATE = template_dev
 else:
   SBT_TEMPLATE = template_local
+print("SBT TEMPLATE:\n %s" %(SBT_TEMPLATE));
 
 elvira_deployed = os.path.join(top, "lib", "Elvira", "bin", "fluValidator2")
 elvira_dev = os.path.join(top, "modules", "bvbrc_sequence_submission", "lib", "Elvira", "bin", "fluValidator2")
@@ -244,8 +245,8 @@ def createSBTFile(sbt_file, metadata, job_data):
   #cit > authors > names | affil
   cit_auth_names = auth_name_template %(last_name, first_name, "") 
 
-  publication_title = metadata.get("Publication Title", "").strip()
-  pmid = metadata.get("Publication PMID", "").strip()
+  publication_title = metadata.get("Publication Title", "").decode('utf-8').strip()
+  pmid = metadata.get("Publication PMID", "").decode('utf-8').strip()
 
   #Handle pub info based on PMID or unpublished
   pub_info = ""
@@ -266,7 +267,7 @@ def createSBTFile(sbt_file, metadata, job_data):
                    "     }\n")
 
     #pub > gen > authors
-    authors = metadata.get("Authors", "").strip()
+    authors = metadata.get("Authors", "").decode('utf-8').strip()
     pub_auth_names = ""
 
     #Use submitter info as the author, if author(s) is empty in metadata
@@ -291,38 +292,16 @@ def createSBTFile(sbt_file, metadata, job_data):
   else:
     pub_info = "pmid %s" %(pmid)
 
-  #Handle address info under new pub descriptuon
-  address_info = ""
-  if street != "" and city != "" and state != "" and postal_code != "":
-    address_info = ("Seqdesc ::= pub {\n"
-                    "  pub {\n"
-                    "    gen {\n"
-                    "      cit \"unpublished\",\n"
-                    "      authors {\n"
-                    "        names std {\n"
-                    "          %s\n"
-                    "        },\n"
-                    "        affil\n"
-                    "          std {\n"
-                    "            affil \"%s\" ,\n"
-                    "            city \"%s\" ,\n"
-                    "            sub \"%s\" ,\n"
-                    "            country \"%s\" ,\n"
-                    "            street \"%s\" ,\n"
-                    "            postal-code \"%s\" ,\n"
-                    "            email \"%s\"\n"
-                    "          }\n"
-                    "        },\n"
-                    "      title \"Direct Submission\"\n"
-                    "    }\n"
-                    "  }\n"
-                    "}\n") %(cit_auth_names[:-1], affiliation, city, state, country, street, postal_code, email)
-
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
-    sf.write(sbt_string.replace("%cit_authors_names%", cit_auth_names[:-1])
-                       .replace("%pub_info%", pub_info)
-                       .replace("%address_info%", address_info)
+    sf.write(sbt_string.replace("%affiliation%", affiliation)
+                       .replace("%street%", street)
+                       .replace("%city%", city)
+                       .replace("%state%", state)
+                       .replace("%country%", country)
+                       .replace("%zipcode%", postal_code)
+                       .replace("%cit_authors_names%", cit_auth_names[:-1])
+                       .replace("%pub_info%", pub_info.replace(u'\xa0', u' '))
             )
 
 def createZipFile(submission_folder, is_manual_submission):
