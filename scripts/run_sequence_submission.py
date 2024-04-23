@@ -489,8 +489,10 @@ if __name__ == "__main__":
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
 
     #Validate sample FASTA file with FLAN
-    flan_validator_file = os.path.join(sample_dir, sample_identifier + ".flu")
-    isFLANSuccessful = runFluValidator(fasta_file, flan_validator_file)
+    #print("Running FluValidator for " + fasta_file)
+    #flan_validator_file = os.path.join(sample_dir, sample_identifier + ".flu")
+    #isFLANSuccessful = runFluValidator(fasta_file, flan_validator_file)
+    #print("FluValidator completed for " + fasta_file)
 
     #Annotate sample FASTA file with VIGOR4
     runVIGOR4(fsa_file_ms, value["row"]["Organism"])
@@ -520,17 +522,21 @@ if __name__ == "__main__":
           vigor_status = "Error"
 
       #Run FLAN
-      flan_output_basename = runFluValidatorPerSegment(segment_file)
+      #print("Running FluValidator for " + segment_file)
+      #flan_output_basename = runFluValidatorPerSegment(segment_file)
+      #print("FluValidator completed for " + segment_file)
 
       #FLAN output files
-      flan_tbl_file = os.path.join(sample_dir, flan_output_basename + ".tbl")
-      flan_report_file = os.path.join(sample_dir, flan_output_basename + ".report")
+      #flan_tbl_file = os.path.join(sample_dir, flan_output_basename + ".tbl")
+      #flan_report_file = os.path.join(sample_dir, flan_output_basename + ".report")
 
       #Validate FLAN result
       flan_status = "Error"
       flan_segment = ""
+      flan_serotype = ""
       flan_message = ""
-      if os.path.isfile(flan_tbl_file) and os.path.isfile(flan_report_file):
+      is_flan_enabled = False
+      if is_flan_enabled and os.path.isfile(flan_tbl_file) and os.path.isfile(flan_report_file):
         #Parse FLAN result for validation
         result = parseFluValidatorPerSegmentResult(flan_report_file)
         flan_status = result["result"]
@@ -546,7 +552,7 @@ if __name__ == "__main__":
       cds_result = parseCDSFile(os.path.join(sample_dir, "%s-%s.cds" %(sample_identifier, segment)))  
       segment_result = flan_segment if flan_segment == cds_result.get("gene", "") else "VIGOR:%s, FLAN:%s" %(cds_result.get("gene", ""), flan_segment)
       status_result = flan_status if flan_status == "VALID" and vigor_status == "Processed" else "VIGOR:%s, FLAN:%s" %(vigor_status, flan_status)
-      if len(cds_result) > 0:
+      if is_flan_enabled and len(cds_result) > 0:
         submission_report_writer.writerow({"Unique_Sequence_Identifier": "%s-%s" %(sample_identifier, segment),
                                            "Segment": segment_result,
                                            "Serotype": flan_serotype,
