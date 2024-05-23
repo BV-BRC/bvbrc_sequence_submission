@@ -44,6 +44,7 @@ Seqdesc ::= pub {
     %pub_info% 
   }
 }
+%bio_info%
 Seqdesc ::= comment "This submission was made by the Bacterial and Viral Bioinformatics Resource Center (BV-BRC) on behalf of %affiliation%. This work was supported by the National Institute of Allergy and Infectious Diseases, National Institutes of Health, Department of Health and Human Services, under Contract No. 75N93019C00076, awarded to the University of Chicago."
 Seqdesc ::= user {
   type str "Submission",

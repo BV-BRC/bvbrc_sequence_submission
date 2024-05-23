@@ -52,7 +52,7 @@ METADATA_FILE_NAME = "metadata.csv"
 SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
 SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "Messages"]
 SEGMENT_MAP = {"1": "PB2", "2": "PB1", "3": "PA", "4": "HA", "5": "NP", "6": "NA", "7": "MP", "8": "NS"}
-SRC_FILE_HEADER = ["Sequence_ID", "Organism", "Strain", "Country", "Host", "Collection-date", "Isolation-source", "Serotype"]
+SRC_FILE_HEADER = ["Sequence_ID", "Organism", "Strain", "Country", "Host", "Collection-date", "Isolation-source", "Serotype", "BioProject", "BioSample"]
 
 def createFASTAFile(output_dir, job_data):
   input_file = os.path.join(output_dir, "input.fasta")
@@ -292,6 +292,40 @@ def createSBTFile(sbt_file, metadata, job_data):
   else:
     pub_info = "pmid %s" %(pmid)
 
+  bioproject = metadata.get("BioProject Accession", "").decode('utf-8').strip()
+  biosample = metadata.get("BioSample Accession", "").decode('utf-8').strip()
+
+  bio_info = ""
+  if bioproject or biosample:
+    bio_info = ("Seqdesc ::= user {\n"
+                "  type str \"DBLink\",\n"
+                "  data {\n")
+
+    if bioproject:
+      bio_info += ("    {\n"
+                "      label str \"BioProject\",\n"
+                "      num 1,\n"
+                "      data strs {\n"
+                "        \"" + bioproject + "\"\n"
+                "      }\n"
+                "    }")
+      if biosample:
+        bio_info += ",\n"
+
+    if biosample:
+      bio_info += ("    {\n"
+                "      label str \"BioSample\",\n"
+                "      num 1,\n"
+                "      data strs {\n"
+                "        \"" + biosample + "\"\n"
+                "      }\n"
+                "    }\n")
+
+    bio_info += ("  }\n"
+                "}")
+  else:
+    bio_info = ""
+
   #Write data to sbt file
   with open(sbt_file, "wb") as sf:
     sf.write(sbt_string.replace("%affiliation%", affiliation)
@@ -301,6 +335,7 @@ def createSBTFile(sbt_file, metadata, job_data):
                        .replace("%country%", country)
                        .replace("%zipcode%", postal_code)
                        .replace("%cit_authors_names%", cit_auth_names[:-1])
+                       .replace("%bio_info%", bio_info)
                        .replace("%pub_info%", pub_info.replace(u'\xa0', u' '))
             )
 
@@ -483,7 +518,9 @@ if __name__ == "__main__":
                            "Host": value["row"]["Host"], 
                            "Collection-date": date,
                            "Isolation-source": value["row"]["Isolation Source"], 
-                           "Serotype": serotype})
+                           "Serotype": serotype,
+                           "BioProject": value["row"]["BioProject Accession"],
+                           "BioSample": value["row"]["BioSample Accession"]})
 
     #Copy metadata file to manual submission folder
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
