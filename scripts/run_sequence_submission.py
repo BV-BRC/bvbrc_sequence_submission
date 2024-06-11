@@ -52,7 +52,7 @@ METADATA_FILE_NAME = "metadata.csv"
 SUBMISSION_REPORT_FILE_NAME = "Sequence_Validation_Report.csv"
 SUBMISSION_FILE_HEADER = ["Unique_Sequence_Identifier", "Segment", "Serotype", "Status", "Messages"]
 SEGMENT_MAP = {"1": "PB2", "2": "PB1", "3": "PA", "4": "HA", "5": "NP", "6": "NA", "7": "MP", "8": "NS"}
-SRC_FILE_HEADER = ["Sequence_ID", "Organism", "Strain", "Country", "Host", "Collection-date", "Isolation-source", "Serotype", "BioProject", "BioSample"]
+SRC_FILE_HEADER = ["Sequence_ID", "Organism", "Strain", "Country", "Host", "Collection-date", "Isolation-source", "Serotype"]
 
 def createFASTAFile(output_dir, job_data):
   input_file = os.path.join(output_dir, "input.fasta")
@@ -518,9 +518,7 @@ if __name__ == "__main__":
                            "Host": value["row"]["Host"], 
                            "Collection-date": date,
                            "Isolation-source": value["row"]["Isolation Source"], 
-                           "Serotype": serotype,
-                           "BioProject": value["row"]["BioProject Accession"],
-                           "BioSample": value["row"]["BioSample Accession"]})
+                           "Serotype": serotype})
 
     #Copy metadata file to manual submission folder
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
