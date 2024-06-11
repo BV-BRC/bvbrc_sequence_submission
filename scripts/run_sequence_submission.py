@@ -519,8 +519,8 @@ if __name__ == "__main__":
                            "Collection-date": date,
                            "Isolation-source": value["row"]["Isolation Source"], 
                            "Serotype": serotype,
-                           "BioProject": value["row"]["BioProject Accession"],
-                           "BioSample": value["row"]["BioSample Accession"]})
+                           "BioProject": value["row"].get("BioProject Accession", "") ,
+                           "BioSample": value["row"].get("BioSample Accession", "")})
 
     #Copy metadata file to manual submission folder
     shutil.copy(sample_metadata_file, os.path.join(manual_sample_submission_dir, sample_identifier + ".src"))
