@@ -20,6 +20,7 @@ This module provides the following application specfication(s):
 
 ## See also
 
+* [Sequence Submission Service Quick Reference](https://www.bv-brc.org/docs/quick_references/services/sequence_submission_service.html)
   * [Sequence Submission Service](https://www.bv-brc.org/docs/https://bv-brc.org/app/SequenceSubmission.html)
   * [Sequence Submission Service Tutorial](https://www.bv-brc.org/docs//tutorial/sequence_submission/sequence_submission.html)
 
